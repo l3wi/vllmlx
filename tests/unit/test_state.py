@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import datetime
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -149,3 +149,84 @@ class TestGlobalState:
         state2 = init_state()
         assert state1 is not state2
         assert get_state() is state2
+
+
+class TestIdleTracking:
+    """Tests for idle tracking features in DaemonState."""
+
+    def test_idle_timer_none_by_default(self):
+        """Test idle_timer is None by default."""
+        state = DaemonState()
+        assert state.idle_timer is None
+
+    @pytest.mark.asyncio
+    async def test_start_idle_tracking(self):
+        """Test start_idle_tracking creates idle timer."""
+        state = DaemonState()
+        state.start_idle_tracking(60)
+        
+        try:
+            assert state.idle_timer is not None
+            assert state.idle_timer.timeout_seconds == 60
+            assert state.idle_timer._running
+        finally:
+            state.stop_idle_tracking()
+
+    @pytest.mark.asyncio
+    async def test_stop_idle_tracking(self):
+        """Test stop_idle_tracking stops and clears timer."""
+        state = DaemonState()
+        state.start_idle_tracking(60)
+        state.stop_idle_tracking()
+        
+        assert state.idle_timer is None
+
+    @pytest.mark.asyncio
+    async def test_start_idle_tracking_replaces_existing(self):
+        """Test start_idle_tracking replaces existing timer."""
+        state = DaemonState()
+        state.start_idle_tracking(60)
+        old_timer = state.idle_timer
+        
+        state.start_idle_tracking(120)
+        
+        try:
+            assert state.idle_timer is not old_timer
+            assert state.idle_timer.timeout_seconds == 120
+        finally:
+            state.stop_idle_tracking()
+
+    @pytest.mark.asyncio
+    async def test_touch_updates_idle_timer(self):
+        """Test touch updates idle timer's last activity."""
+        state = DaemonState()
+        state.start_idle_tracking(60)
+        
+        try:
+            # Get initial seconds
+            initial = state.idle_timer.seconds_until_timeout
+            
+            import time
+            time.sleep(0.1)
+            
+            # Touch should reset the timer
+            state.touch()
+            reset = state.idle_timer.seconds_until_timeout
+            
+            # After touch, remaining time should be higher (closer to timeout)
+            assert reset > initial - 0.2  # Allow some tolerance
+        finally:
+            state.stop_idle_tracking()
+
+    def test_touch_works_without_idle_timer(self):
+        """Test touch works even when no idle timer is set."""
+        state = DaemonState()
+        state.touch()  # Should not raise
+        assert state.last_request_at is not None
+
+    @pytest.mark.asyncio
+    async def test_stop_idle_tracking_when_none(self):
+        """Test stop_idle_tracking is safe when no timer."""
+        state = DaemonState()
+        state.stop_idle_tracking()  # Should not raise
+        assert state.idle_timer is None
