@@ -108,6 +108,7 @@ class DaemonStatusResponse(BaseModel):
     loaded_model: Optional[str]
     model_loaded_at: Optional[str]
     last_request_at: Optional[str]
+    idle_seconds_remaining: Optional[float]
     memory_usage_mb: float
     idle_timeout: int
 
@@ -285,6 +286,8 @@ async def chat_completions(request: ChatCompletionRequest):
         # Hot-swap if different model requested
         if state.loaded_model_name != model_path:
             if state.model is not None:
+                # Stop old idle tracking before unloading
+                state.stop_idle_tracking()
                 ModelManager.unload_model(state.model, state.processor)
                 state.reset_model_state()
 
@@ -295,6 +298,9 @@ async def chat_completions(request: ChatCompletionRequest):
                 state.config = model_config
                 state.loaded_model_name = model_path
                 state.loaded_at = datetime.now()
+
+                # Start idle tracking after successful load
+                state.start_idle_tracking(config.daemon.idle_timeout)
             except Exception as e:
                 raise HTTPException(
                     status_code=503,
@@ -346,6 +352,11 @@ async def daemon_status():
     config = Config.load()
     now = datetime.now()
 
+    # Get idle seconds remaining from timer if running
+    idle_seconds_remaining = None
+    if state.idle_timer:
+        idle_seconds_remaining = state.idle_timer.seconds_until_timeout
+
     return DaemonStatusResponse(
         running=True,
         pid=os.getpid(),
@@ -353,6 +364,7 @@ async def daemon_status():
         loaded_model=state.loaded_model_name,
         model_loaded_at=state.loaded_at.isoformat() if state.loaded_at else None,
         last_request_at=state.last_request_at.isoformat() if state.last_request_at else None,
+        idle_seconds_remaining=idle_seconds_remaining,
         memory_usage_mb=get_memory_usage_mb(),
         idle_timeout=config.daemon.idle_timeout,
     )
@@ -369,6 +381,8 @@ async def internal_unload():
     async with state.lock:
         if state.model is not None:
             unloaded_model = state.loaded_model_name
+            # Stop idle tracking before unloading
+            state.stop_idle_tracking()
             ModelManager.unload_model(state.model, state.processor)
             state.reset_model_state()
             return {"success": True, "unloaded_model": unloaded_model}
