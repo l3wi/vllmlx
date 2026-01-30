@@ -33,15 +33,30 @@ class LocalChatSession:
         Returns:
             True if loaded successfully
         """
+        import sys
+        import io
+        import warnings
+        
         try:
+            # Suppress all the noisy warnings during load
+            warnings.filterwarnings("ignore")
+            
             from mlx_vlm import load
             from mlx_vlm.utils import load_config
             
-            with console.status(f"[bold blue]Loading {self.model_path}...", spinner="dots"):
+            console.print(f"[bold blue]Loading {self.model_path}...[/bold blue]")
+            
+            # Capture stderr to hide progress bars and warnings
+            old_stderr = sys.stderr
+            sys.stderr = io.StringIO()
+            
+            try:
                 self.model, self.processor = load(self.model_path)
                 self.config = load_config(self.model_path)
+            finally:
+                sys.stderr = old_stderr
             
-            console.print(f"[green]✓[/green] Model loaded")
+            console.print(f"[green]✓ Model loaded[/green]\n")
             return True
         except Exception as e:
             console.print(f"[red]Error loading model: {e}[/red]")
@@ -90,6 +105,10 @@ class LocalChatSession:
         Returns:
             Full response text or None if failed
         """
+        import sys
+        import io
+        import warnings
+        
         from mlx_vlm import generate
         from mlx_vlm.prompt_utils import apply_chat_template
 
@@ -105,19 +124,27 @@ class LocalChatSession:
             console.print()  # Newline before response
             full_text = ""
 
-            # Generate with streaming output
-            for token in generate(
-                self.model,
-                self.processor,
-                formatted_prompt,
-                [],  # no images
-                max_tokens=1024,
-                temp=0.7,
-                verbose=False,
-            ):
-                if isinstance(token, str):
-                    console.print(token, end="")
-                    full_text += token
+            # Suppress deprecation warnings during generation
+            warnings.filterwarnings("ignore")
+            old_stderr = sys.stderr
+            sys.stderr = io.StringIO()
+            
+            try:
+                # Generate with streaming output
+                for token in generate(
+                    self.model,
+                    self.processor,
+                    formatted_prompt,
+                    [],  # no images
+                    max_tokens=1024,
+                    temp=0.7,
+                    verbose=False,
+                ):
+                    if isinstance(token, str):
+                        console.print(token, end="")
+                        full_text += token
+            finally:
+                sys.stderr = old_stderr
 
             console.print()  # Newline after response
             console.print()  # Extra spacing
