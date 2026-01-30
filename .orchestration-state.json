@@ -38,6 +38,13 @@
       "task_file": "docs/tasks/vmlx-phase-5.md",
       "status": "running",
       "worktree_path": "/Users/lewi/Documents/ai/vmlx.feat-vmlx-phase-5"
+    },
+    "feat/vmlx-phase-6": {
+      "pid": 91765,
+      "branch": "feat/vmlx-phase-6",
+      "task_file": "docs/tasks/vmlx-phase-6.md",
+      "status": "running",
+      "worktree_path": "/Users/lewi/Documents/ai/vmlx.feat-vmlx-phase-6"
     }
   }
 }

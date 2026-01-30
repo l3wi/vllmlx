@@ -48,12 +48,17 @@ def list_models() -> list[ModelInfo]:
     for repo in cache.repos:
         # Filter for MLX models (heuristic: check for mlx in path)
         if "mlx" in repo.repo_id.lower():
+            # Convert timestamp to datetime if needed
+            last_mod = repo.last_modified
+            if isinstance(last_mod, (int, float)):
+                last_mod = datetime.fromtimestamp(last_mod)
+            
             models.append(
                 ModelInfo(
                     name=repo.repo_id,
                     hf_path=repo.repo_id,
                     size_bytes=repo.size_on_disk,
-                    last_modified=repo.last_modified,
+                    last_modified=last_mod,
                 )
             )
 
