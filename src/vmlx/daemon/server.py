@@ -18,11 +18,15 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown - unload model if loaded
+    # Shutdown - stop idle timer and unload model if loaded
     try:
         from vmlx.models.manager import ModelManager
 
         state = get_state()
+        
+        # Stop idle tracking first
+        state.stop_idle_tracking()
+        
         if state.model is not None:
             ModelManager.unload_model(state.model, state.processor)
             state.reset_model_state()

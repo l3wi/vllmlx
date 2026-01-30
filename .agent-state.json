@@ -2,19 +2,19 @@
   "status": "in_progress",
   "task": "docs/tasks/vmlx-phase-3.md",
   "phase": "3",
-  "progress": 0.3,
-  "current_activity": "Implementing DaemonState modifications for idle tracking",
+  "progress": 0.45,
+  "current_activity": "Modifying server.py to handle idle timer in lifespan",
   "files_completed": [
     "src/vmlx/daemon/idle.py",
-    "tests/unit/test_idle.py"
+    "tests/unit/test_idle.py",
+    "src/vmlx/daemon/state.py"
   ],
   "files_remaining": [
-    "src/vmlx/daemon/state.py",
     "src/vmlx/daemon/server.py",
     "src/vmlx/daemon/routes.py",
     "tests/integration/test_idle_timeout.py"
   ],
-  "commits": 1,
-  "updated_at": "2026-01-30T22:42:00Z",
+  "commits": 2,
+  "updated_at": "2026-01-30T22:48:00Z",
   "error": null
 }
