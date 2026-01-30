@@ -4,7 +4,7 @@
 **Branch**: `feat/vmlx-phase-2`  
 **Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
 **Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
-**Status**: pending
+**Status**: completed
 
 ---
 
@@ -16,18 +16,18 @@ Build the core daemon with FastAPI server exposing OpenAI-compatible endpoints, 
 
 ## Acceptance Criteria
 
-- [ ] `vmlx serve` starts FastAPI server on port 11434
-- [ ] `GET /health` returns `{"status": "ok"}`
-- [ ] `GET /v1/models` returns list of available models
-- [ ] `POST /v1/chat/completions` works with text-only messages
-- [ ] `POST /v1/chat/completions` works with image input (base64)
-- [ ] Streaming responses work (`stream: true`)
-- [ ] Model loads on first request automatically
-- [ ] Hot-swap: requesting different model unloads current, loads new
-- [ ] `GET /status` returns daemon status (loaded model, memory, uptime)
-- [ ] Graceful shutdown on SIGTERM
-- [ ] All tests pass
-- [ ] Lint clean
+- [x] `vmlx serve` starts FastAPI server on port 11434
+- [x] `GET /health` returns `{"status": "ok"}`
+- [x] `GET /v1/models` returns list of available models
+- [x] `POST /v1/chat/completions` works with text-only messages
+- [x] `POST /v1/chat/completions` works with image input (base64)
+- [x] Streaming responses work (`stream: true`)
+- [x] Model loads on first request automatically
+- [x] Hot-swap: requesting different model unloads current, loads new
+- [x] `GET /status` returns daemon status (loaded model, memory, uptime)
+- [x] Graceful shutdown on SIGTERM
+- [x] All tests pass (71 tests)
+- [x] Lint clean
 
 ---
 

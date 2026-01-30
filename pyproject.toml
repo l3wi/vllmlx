@@ -9,10 +9,13 @@ dependencies = [
     "toml>=0.10",
     "huggingface_hub>=0.20",
     "rich>=13.0",
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+    "mlx-vlm>=0.1.0",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio", "ruff"]
+dev = ["pytest", "pytest-asyncio", "ruff", "httpx"]
 
 [project.scripts]
 vmlx = "vmlx.cli.main:cli"
