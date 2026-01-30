@@ -1,5 +1,9 @@
 """Main CLI entry point for vmlx."""
 
+import os
+# Suppress TensorFlow/PyTorch not found warnings from transformers
+os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+
 import click
 
 from vmlx import __version__

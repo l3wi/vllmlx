@@ -60,7 +60,10 @@ class LocalChatSession:
                 self.processor = None
                 self.config = None
                 gc.collect()
-                if hasattr(mx.metal, 'clear_cache'):
+                # Use new API if available, fallback to old
+                if hasattr(mx, 'clear_cache'):
+                    mx.clear_cache()
+                elif hasattr(mx.metal, 'clear_cache'):
                     mx.metal.clear_cache()
         except Exception:
             pass
