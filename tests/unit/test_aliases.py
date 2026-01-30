@@ -1,6 +1,5 @@
 """Tests for model aliases module."""
 
-import pytest
 
 from vmlx.models.aliases import BUILTIN_ALIASES, resolve_alias
 

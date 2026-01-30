@@ -3,8 +3,6 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from vmlx.models.registry import ModelInfo, delete_model, format_size, list_models
 
 
