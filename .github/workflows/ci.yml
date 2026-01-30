@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev, feat/*]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Install dependencies
+        run: uv sync --dev
+      
+      - name: Run ruff check
+        run: uv run ruff check src tests
+      
+      - name: Run ruff format check
+        run: uv run ruff format --check src tests
+
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Install dependencies
+        run: uv sync --dev
+      
+      - name: Run unit tests
+        run: uv run pytest tests/unit -v
+
+  # Integration tests need real models - run separately on main only
+  test-integration:
+    runs-on: macos-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Install dependencies
+        run: uv sync --dev
+      
+      - name: Run integration tests
+        run: uv run pytest tests/integration -v --timeout=300

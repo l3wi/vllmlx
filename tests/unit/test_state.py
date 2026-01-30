@@ -207,6 +207,7 @@ class TestIdleTracking:
             initial = state.idle_timer.seconds_until_timeout
 
             import time
+
             time.sleep(0.1)
 
             # Touch should reset the timer

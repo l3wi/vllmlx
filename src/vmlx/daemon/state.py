@@ -80,8 +80,10 @@ class DaemonState:
             if self.model:
                 model_name = self.loaded_model_name
                 idle_duration = (
-                    datetime.now() - self.last_request_at
-                ).total_seconds() if self.last_request_at else 0
+                    (datetime.now() - self.last_request_at).total_seconds()
+                    if self.last_request_at
+                    else 0
+                )
 
                 ModelManager.unload_model(self.model, self.processor)
                 self.reset_model_state()
