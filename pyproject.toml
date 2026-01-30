@@ -33,6 +33,7 @@ dependencies = [
     "uvicorn>=0.20",
     "mlx-vlm>=0.1.0",
     "httpx>=0.25",
+    "transformers>=4.40,<4.50",  # mlx-vlm compatibility
 ]
 
 [project.optional-dependencies]
