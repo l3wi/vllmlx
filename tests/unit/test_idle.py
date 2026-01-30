@@ -186,6 +186,7 @@ class TestIdleTimerSecondsRemaining:
         timer.touch()
 
         import time
+
         remaining1 = timer.seconds_until_timeout
         time.sleep(0.1)
         remaining2 = timer.seconds_until_timeout
@@ -198,6 +199,7 @@ class TestIdleTimerSecondsRemaining:
         timer.touch()
 
         import time
+
         time.sleep(0.1)
         remaining = timer.seconds_until_timeout
 

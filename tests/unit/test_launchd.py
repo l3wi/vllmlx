@@ -270,9 +270,7 @@ class TestLoadDaemon:
         monkeypatch.setattr(launchd, "get_plist_path", lambda: plist_path)
 
         # Mock subprocess.run returning "already loaded" error
-        mock_run = MagicMock(
-            return_value=MagicMock(returncode=1, stderr="service already loaded")
-        )
+        mock_run = MagicMock(return_value=MagicMock(returncode=1, stderr="service already loaded"))
         monkeypatch.setattr("subprocess.run", mock_run)
 
         result = launchd.load_daemon()
@@ -363,9 +361,7 @@ class TestGetDaemonPid:
         from vmlx.daemon import launchd
 
         # When service is loaded but not running, PID shows as "-"
-        mock_run = MagicMock(
-            return_value=MagicMock(returncode=0, stdout="-\t0\tcom.vmlx.daemon")
-        )
+        mock_run = MagicMock(return_value=MagicMock(returncode=0, stdout="-\t0\tcom.vmlx.daemon"))
         monkeypatch.setattr("subprocess.run", mock_run)
 
         assert launchd.get_daemon_pid() is None

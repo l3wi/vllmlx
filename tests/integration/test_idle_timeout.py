@@ -104,6 +104,7 @@ class TestIdleTimerIntegration:
 
                 # Wait a bit
                 import time
+
                 time.sleep(0.2)
 
                 # Get idle_seconds (should be less now)
@@ -212,6 +213,7 @@ class TestIdleTimerState:
 
                 # Wait a bit
                 import time
+
                 time.sleep(0.1)
 
                 # Load different model (hot-swap)

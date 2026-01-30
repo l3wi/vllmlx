@@ -141,9 +141,7 @@ def status():
     table.add_column("Property", style="cyan")
     table.add_column("Value")
 
-    table.add_row(
-        "Status", "[green]Running[/green]" if running else "[red]Stopped[/red]"
-    )
+    table.add_row("Status", "[green]Running[/green]" if running else "[red]Stopped[/red]")
     table.add_row("PID", str(pid) if pid else "-")
     table.add_row("Port", str(config.daemon.port))
 
@@ -160,9 +158,7 @@ def status():
                 table.add_row("Loaded Model", data.get("loaded_model") or "-")
                 table.add_row("Memory", f"{data.get('memory_usage_mb', 0):.1f} MB")
                 if data.get("idle_seconds_remaining"):
-                    table.add_row(
-                        "Idle Timeout In", f"{data['idle_seconds_remaining']:.0f}s"
-                    )
+                    table.add_row("Idle Timeout In", f"{data['idle_seconds_remaining']:.0f}s")
         except Exception:
             pass  # API not responding, just show basic info
 
@@ -171,9 +167,7 @@ def status():
 
 @daemon.command()
 @click.option("-f", "--follow", is_flag=True, help="Follow log output (tail -f)")
-@click.option(
-    "-n", "--lines", default=50, type=int, help="Number of lines to show (default: 50)"
-)
+@click.option("-n", "--lines", default=50, type=int, help="Number of lines to show (default: 50)")
 def logs(follow: bool, lines: int):
     """View daemon logs.
 
