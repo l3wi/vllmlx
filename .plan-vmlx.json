@@ -1,0 +1,10 @@
+{
+  "feature": "vmlx",
+  "phase": "ready",
+  "prdFile": "docs/prds/vmlx.md",
+  "specFile": "docs/specs/vmlx-spec.md",
+  "planFile": "docs/plans/vmlx.md",
+  "specSummary": "6-phase implementation: 1) Core infra (config, aliases, HF integration, pull/ls/rm CLI), 2) Daemon & API (FastAPI server, OpenAI endpoints, hot-swap), 3) Idle management (timer, memory cleanup), 4) launchd integration (plist, daemon commands), 5) Interactive chat (REPL), 6) Docs & release. Embeds MLX-VLM as library for full model lifecycle control.",
+  "timestamp": "2026-01-30T22:25:00.000Z",
+  "nextAction": "swarm_execute"
+}
