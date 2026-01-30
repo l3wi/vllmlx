@@ -4,6 +4,7 @@ import click
 
 from vmlx import __version__
 from vmlx.cli.config_cmd import config_cmd
+from vmlx.cli.daemon_cmd import daemon
 from vmlx.cli.ls import ls
 from vmlx.cli.pull import pull
 from vmlx.cli.rm import rm
@@ -26,6 +27,7 @@ cli.add_command(ls)
 cli.add_command(rm)
 cli.add_command(config_cmd, name="config")
 cli.add_command(serve)
+cli.add_command(daemon)
 
 
 if __name__ == "__main__":
