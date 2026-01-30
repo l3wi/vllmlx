@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -164,7 +164,7 @@ class TestIdleTracking:
         """Test start_idle_tracking creates idle timer."""
         state = DaemonState()
         state.start_idle_tracking(60)
-        
+
         try:
             assert state.idle_timer is not None
             assert state.idle_timer.timeout_seconds == 60
@@ -178,7 +178,7 @@ class TestIdleTracking:
         state = DaemonState()
         state.start_idle_tracking(60)
         state.stop_idle_tracking()
-        
+
         assert state.idle_timer is None
 
     @pytest.mark.asyncio
@@ -187,9 +187,9 @@ class TestIdleTracking:
         state = DaemonState()
         state.start_idle_tracking(60)
         old_timer = state.idle_timer
-        
+
         state.start_idle_tracking(120)
-        
+
         try:
             assert state.idle_timer is not old_timer
             assert state.idle_timer.timeout_seconds == 120
@@ -201,18 +201,18 @@ class TestIdleTracking:
         """Test touch updates idle timer's last activity."""
         state = DaemonState()
         state.start_idle_tracking(60)
-        
+
         try:
             # Get initial seconds
             initial = state.idle_timer.seconds_until_timeout
-            
+
             import time
             time.sleep(0.1)
-            
+
             # Touch should reset the timer
             state.touch()
             reset = state.idle_timer.seconds_until_timeout
-            
+
             # After touch, remaining time should be higher (closer to timeout)
             assert reset > initial - 0.2  # Allow some tolerance
         finally:

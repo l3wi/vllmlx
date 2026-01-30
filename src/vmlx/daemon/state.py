@@ -82,11 +82,11 @@ class DaemonState:
                 idle_duration = (
                     datetime.now() - self.last_request_at
                 ).total_seconds() if self.last_request_at else 0
-                
+
                 ModelManager.unload_model(self.model, self.processor)
                 self.reset_model_state()
                 self.stop_idle_tracking()
-                
+
                 logger.info(
                     f"Unloaded model '{model_name}' due to idle timeout "
                     f"(idle for {idle_duration:.1f}s)"

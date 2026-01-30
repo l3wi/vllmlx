@@ -2,19 +2,19 @@
   "status": "in_progress",
   "task": "docs/tasks/vmlx-phase-3.md",
   "phase": "3",
-  "progress": 0.45,
-  "current_activity": "Modifying server.py to handle idle timer in lifespan",
+  "progress": 0.7,
+  "current_activity": "Writing integration tests for idle timeout functionality",
   "files_completed": [
     "src/vmlx/daemon/idle.py",
     "tests/unit/test_idle.py",
-    "src/vmlx/daemon/state.py"
+    "src/vmlx/daemon/state.py",
+    "src/vmlx/daemon/server.py",
+    "src/vmlx/daemon/routes.py"
   ],
   "files_remaining": [
-    "src/vmlx/daemon/server.py",
-    "src/vmlx/daemon/routes.py",
     "tests/integration/test_idle_timeout.py"
   ],
-  "commits": 2,
-  "updated_at": "2026-01-30T22:48:00Z",
+  "commits": 3,
+  "updated_at": "2026-01-30T22:53:00Z",
   "error": null
 }

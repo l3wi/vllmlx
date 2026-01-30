@@ -298,7 +298,7 @@ async def chat_completions(request: ChatCompletionRequest):
                 state.config = model_config
                 state.loaded_model_name = model_path
                 state.loaded_at = datetime.now()
-                
+
                 # Start idle tracking after successful load
                 state.start_idle_tracking(config.daemon.idle_timeout)
             except Exception as e:
