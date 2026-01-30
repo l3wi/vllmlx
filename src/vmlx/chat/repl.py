@@ -126,12 +126,15 @@ class LocalChatSession:
 
             # Suppress deprecation warnings during generation
             warnings.filterwarnings("ignore")
+            
+            # Capture stdout/stderr to hide mlx deprecation warnings
+            old_stdout = sys.stdout
             old_stderr = sys.stderr
+            sys.stdout = io.StringIO()
             sys.stderr = io.StringIO()
             
             try:
-                # Generate with streaming output
-                for token in generate(
+                response = generate(
                     self.model,
                     self.processor,
                     formatted_prompt,
@@ -139,12 +142,14 @@ class LocalChatSession:
                     max_tokens=1024,
                     temp=0.7,
                     verbose=False,
-                ):
-                    if isinstance(token, str):
-                        console.print(token, end="")
-                        full_text += token
+                )
             finally:
+                sys.stdout = old_stdout
                 sys.stderr = old_stderr
+            
+            # Print the response
+            console.print(response)
+            full_text = response
 
             console.print()  # Newline after response
             console.print()  # Extra spacing
