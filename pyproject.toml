@@ -1,12 +1,12 @@
 [project]
-name = "vmlx"
+name = "vllmlx"
 version = "0.1.0"
-description = "Ollama-style CLI for MLX-VLM - Vision Language Models on Apple Silicon"
+description = "Ollama-style daemon and CLI over vllm-mlx on Apple Silicon"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 authors = [
-    {name = "vmlx contributors"}
+    {name = "vllmlx contributors"}
 ]
 keywords = ["mlx", "vlm", "vision", "language", "model", "apple", "silicon", "ollama", "ai", "machine-learning"]
 classifiers = [
@@ -31,9 +31,11 @@ dependencies = [
     "rich>=13.0",
     "fastapi>=0.100",
     "uvicorn>=0.20",
-    "mlx-vlm>=0.1.0",
+    "vllm-mlx>=0.2.6",
+    "mlx-vlm>=0.4.1",
     "httpx>=0.25",
-    "transformers>=4.40,<4.50",  # mlx-vlm compatibility
+    "transformers>=5.0.0",
+    "psutil>=5.9",  # System memory monitoring
 ]
 
 [project.optional-dependencies]
@@ -46,21 +48,21 @@ dev = [
 ]
 
 [project.scripts]
-vmlx = "vmlx.cli.main:cli"
+vllmlx = "vllmlx.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/vmlx"
-Documentation = "https://github.com/yourusername/vmlx#readme"
-Repository = "https://github.com/yourusername/vmlx"
-Issues = "https://github.com/yourusername/vmlx/issues"
-Changelog = "https://github.com/yourusername/vmlx/releases"
+Homepage = "https://github.com/yourusername/vllmlx"
+Documentation = "https://github.com/yourusername/vllmlx#readme"
+Repository = "https://github.com/yourusername/vllmlx"
+Issues = "https://github.com/yourusername/vllmlx/issues"
+Changelog = "https://github.com/yourusername/vllmlx/releases"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/vmlx"]
+packages = ["src/vllmlx"]
 
 [tool.ruff]
 line-length = 100

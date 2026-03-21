@@ -1,15 +1,15 @@
-# Technical Specification: vmlx
+# Technical Specification: vllmlx
 
 **Status:** Draft  
 **ADRs:** [ADR-0001: Embed MLX-VLM](../decisions/ADR-0001-embed-mlx-vlm.md)  
-**PRD:** [docs/prds/vmlx.md](../prds/vmlx.md)  
+**PRD:** [docs/prds/vllmlx.md](../prds/vllmlx.md)  
 **Date:** 2026-01-30  
 
 ---
 
 ## Overview
 
-vmlx is an Ollama-style CLI wrapper for MLX-VLM that provides:
+vllmlx is an Ollama-style CLI wrapper for MLX-VLM that provides:
 - A persistent daemon with OpenAI-compatible API
 - Simple model management (pull, list, remove)
 - Interactive chat interface
@@ -63,7 +63,7 @@ MLX-VLM provides:
 
 ### Technical Goals
 - Clean separation: CLI ↔ Daemon ↔ MLX-VLM
-- Single source of truth for config (`~/.vmlx/config.toml`)
+- Single source of truth for config (`~/.vllmlx/config.toml`)
 - Graceful degradation (daemon down → helpful error messages)
 - Extensible alias registry
 
@@ -81,15 +81,15 @@ MLX-VLM provides:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                          vmlx CLI                               │
+│                          vllmlx CLI                               │
 │   pull | ls | rm | run | serve | daemon | config                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               │ HTTP (localhost:11434)
-                              │ Unix socket (~/.vmlx/vmlx.sock)
+                              │ Unix socket (~/.vllmlx/vllmlx.sock)
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                       vmlx Daemon                               │
+│                       vllmlx Daemon                               │
 │  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐  │
 │  │ API Router  │  │ Model Manager │  │ Idle Timer           │  │
 │  │ (FastAPI)   │  │ - load/unload │  │ - tracks last request │  │
@@ -112,7 +112,7 @@ MLX-VLM provides:
 
 ### Component Design
 
-#### 1. CLI (`vmlx/cli/`)
+#### 1. CLI (`vllmlx/cli/`)
 
 **Technology:** `click` (simple, well-known, fewer dependencies than `typer`)
 
@@ -120,24 +120,24 @@ MLX-VLM provides:
 
 | Command | Action |
 |---------|--------|
-| `vmlx pull <model>` | Download model via `huggingface_hub.snapshot_download()` |
-| `vmlx ls` | List models from HF cache + alias resolution |
-| `vmlx rm <model>` | Remove model via `huggingface_hub.scan_cache_dir().delete_revisions()` |
-| `vmlx run <model>` | Start interactive chat (calls daemon API) |
-| `vmlx serve` | Run server in foreground (for development) |
-| `vmlx daemon status` | Check daemon via socket/pidfile |
-| `vmlx daemon start` | Install + load launchd plist |
-| `vmlx daemon stop` | Unload launchd plist |
-| `vmlx daemon restart` | Stop + start |
-| `vmlx daemon logs` | Tail `~/.vmlx/logs/daemon.log` |
-| `vmlx config` | Show current config |
-| `vmlx config set <key> <value>` | Update config.toml |
+| `vllmlx pull <model>` | Download model via `huggingface_hub.snapshot_download()` |
+| `vllmlx ls` | List models from HF cache + alias resolution |
+| `vllmlx rm <model>` | Remove model via `huggingface_hub.scan_cache_dir().delete_revisions()` |
+| `vllmlx run <model>` | Start interactive chat (calls daemon API) |
+| `vllmlx serve` | Run server in foreground (for development) |
+| `vllmlx daemon status` | Check daemon via socket/pidfile |
+| `vllmlx daemon start` | Install + load launchd plist |
+| `vllmlx daemon stop` | Unload launchd plist |
+| `vllmlx daemon restart` | Stop + start |
+| `vllmlx daemon logs` | Tail `~/.vllmlx/logs/daemon.log` |
+| `vllmlx config` | Show current config |
+| `vllmlx config set <key> <value>` | Update config.toml |
 
 **CLI ↔ Daemon Communication:**
 - Primary: HTTP to `localhost:11434`
-- Health check: Unix socket at `~/.vmlx/vmlx.sock` (faster, no port conflicts)
+- Health check: Unix socket at `~/.vllmlx/vllmlx.sock` (faster, no port conflicts)
 
-#### 2. Daemon (`vmlx/daemon/`)
+#### 2. Daemon (`vllmlx/daemon/`)
 
 **Technology:** FastAPI + uvicorn (matches MLX-VLM's stack)
 
@@ -145,8 +145,8 @@ MLX-VLM provides:
 - Serve OpenAI-compatible API on port 11434
 - Manage model lifecycle (load, unload, hot-swap)
 - Track idle time and unload after timeout
-- Write logs to `~/.vmlx/logs/`
-- Expose health/status endpoints
+- Write logs to `~/.vllmlx/logs/`
+- Expose health and `/v1/status` endpoints
 
 **Process Model:**
 - Single Python process embedding MLX-VLM
@@ -160,10 +160,10 @@ MLX-VLM provides:
 | `GET /v1/models` | List available models |
 | `POST /v1/chat/completions` | OpenAI-compatible chat (main API) |
 | `GET /health` | Health check for launchd/monitoring |
-| `GET /status` | Extended status (loaded model, RAM, uptime) |
+| `GET /v1/status` | Extended status (loaded model, RAM, uptime) |
 | `POST /_internal/unload` | Force model unload (internal) |
 
-#### 3. Model Manager (`vmlx/models/`)
+#### 3. Model Manager (`vllmlx/models/`)
 
 **Responsibilities:**
 - Resolve aliases to full HF paths
@@ -174,7 +174,7 @@ MLX-VLM provides:
 **Alias Registry:**
 
 ```python
-# vmlx/models/aliases.py
+# vllmlx/models/aliases.py
 BUILTIN_ALIASES = {
     "qwen2-vl-2b": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
     "qwen2-vl-7b": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
@@ -188,9 +188,9 @@ BUILTIN_ALIASES = {
 }
 ```
 
-Custom aliases loaded from `~/.vmlx/config.toml` override builtins.
+Custom aliases loaded from `~/.vllmlx/config.toml` override builtins.
 
-#### 4. Idle Timer (`vmlx/daemon/idle.py`)
+#### 4. Idle Timer (`vllmlx/daemon/idle.py`)
 
 **Mechanism:**
 - Track timestamp of last API request
@@ -205,9 +205,9 @@ Custom aliases loaded from `~/.vmlx/config.toml` override builtins.
                                       |______request__________________|
 ```
 
-#### 5. Configuration (`vmlx/config/`)
+#### 5. Configuration (`vllmlx/config/`)
 
-**File:** `~/.vmlx/config.toml`
+**File:** `~/.vllmlx/config.toml`
 
 ```toml
 [daemon]
@@ -217,7 +217,7 @@ idle_timeout = 60  # seconds
 log_level = "info"
 
 [models]
-default = ""  # optional default model for `vmlx run` without args
+default = ""  # optional default model for `vllmlx run` without args
 
 [aliases]
 # Custom aliases (override builtins)
@@ -226,16 +226,16 @@ default = ""  # optional default model for `vmlx run` without args
 
 **Programmatic Access:**
 ```python
-from vmlx.config import Config
+from vllmlx.config import Config
 
-config = Config.load()  # from ~/.vmlx/config.toml
+config = Config.load()  # from ~/.vllmlx/config.toml
 config.daemon.port  # 11434
 config.resolve_alias("qwen2-vl-7b")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
 ```
 
-#### 6. launchd Integration (`vmlx/daemon/launchd.py`)
+#### 6. launchd Integration (`vllmlx/daemon/launchd.py`)
 
-**Plist Location:** `~/Library/LaunchAgents/com.vmlx.daemon.plist`
+**Plist Location:** `~/Library/LaunchAgents/com.vllmlx.daemon.plist`
 
 **Generated Plist:**
 ```xml
@@ -244,12 +244,12 @@ config.resolve_alias("qwen2-vl-7b")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.vmlx.daemon</string>
+    <string>com.vllmlx.daemon</string>
     <key>ProgramArguments</key>
     <array>
         <string>{python_path}</string>
         <string>-m</string>
-        <string>vmlx.daemon</string>
+        <string>vllmlx.daemon</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -259,9 +259,9 @@ config.resolve_alias("qwen2-vl-7b")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
         <false/>
     </dict>
     <key>StandardOutPath</key>
-    <string>{home}/.vmlx/logs/daemon.log</string>
+    <string>{home}/.vllmlx/logs/daemon.log</string>
     <key>StandardErrorPath</key>
-    <string>{home}/.vmlx/logs/daemon.error.log</string>
+    <string>{home}/.vllmlx/logs/daemon.error.log</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
@@ -325,7 +325,7 @@ class ModelInfo(BaseModel):
 
 ```python
 class DaemonStatus(BaseModel):
-    """Status response from /status endpoint."""
+    """Status response from /v1/status endpoint."""
     running: bool
     pid: int
     uptime_seconds: float
@@ -398,7 +398,7 @@ data: [DONE]
 {"status": "ok"}
 ```
 
-#### GET /status
+#### GET /v1/status
 
 ```json
 {
@@ -415,7 +415,7 @@ data: [DONE]
 
 #### POST /_internal/unload
 
-Force unload current model (used by `vmlx daemon restart`).
+Force unload current model (used by `vllmlx daemon restart`).
 
 ```json
 {"success": true, "unloaded_model": "qwen2-vl-7b"}
@@ -482,7 +482,7 @@ Force unload current model (used by `vmlx daemon restart`).
 |---------|------------|
 | API exposed to network | Default bind to `127.0.0.1` only |
 | Arbitrary model execution | Models only from HuggingFace (trusted source) |
-| Config file tampering | Standard Unix permissions on `~/.vmlx/` |
+| Config file tampering | Standard Unix permissions on `~/.vllmlx/` |
 | Log file exposure | Logs contain prompts - user's responsibility |
 
 ### Performance
@@ -527,16 +527,16 @@ Force unload current model (used by `vmlx daemon restart`).
 
 **Tasks:**
 - Project scaffolding (pyproject.toml, src layout)
-- Config module (`~/.vmlx/config.toml` read/write)
+- Config module (`~/.vllmlx/config.toml` read/write)
 - Model alias registry (builtin + custom)
 - HuggingFace integration (list, download, delete models)
 - CLI skeleton with `pull`, `ls`, `rm` commands
 
 **Deliverables:**
-- `vmlx pull qwen2-vl-2b` downloads model
-- `vmlx ls` shows downloaded models
-- `vmlx rm qwen2-vl-2b` removes model
-- `vmlx config` shows config
+- `vllmlx pull qwen2-vl-2b` downloads model
+- `vllmlx ls` shows downloaded models
+- `vllmlx rm qwen2-vl-2b` removes model
+- `vllmlx config` shows config
 
 **Tests:**
 - Config load/save roundtrip
@@ -553,11 +553,11 @@ Force unload current model (used by `vmlx daemon restart`).
 - Generation via MLX-VLM `generate()`
 - Streaming response support
 - Hot-swap model loading
-- Health/status endpoints
-- `vmlx serve` command (foreground server)
+- Health and `/v1/status` endpoints
+- `vllmlx serve` command (foreground server)
 
 **Deliverables:**
-- `vmlx serve` starts server on :11434
+- `vllmlx serve` starts server on :11434
 - `curl localhost:11434/v1/models` returns models
 - Chat completions work with image input
 - Model hot-swap on different model request
@@ -595,14 +595,14 @@ Force unload current model (used by `vmlx daemon restart`).
 
 **Tasks:**
 - Plist generation
-- `vmlx daemon start|stop|restart|status|logs` commands
+- `vllmlx daemon start|stop|restart|status|logs` commands
 - Post-install hook to offer daemon setup
 - Graceful shutdown handling (SIGTERM)
 
 **Deliverables:**
-- `vmlx daemon start` installs and starts daemon
+- `vllmlx daemon start` installs and starts daemon
 - Daemon survives reboot
-- `vmlx daemon logs` tails log file
+- `vllmlx daemon logs` tails log file
 - Clean shutdown on `stop`
 
 **Tests:**
@@ -615,14 +615,14 @@ Force unload current model (used by `vmlx daemon restart`).
 **Goal:** Simple REPL chat interface
 
 **Tasks:**
-- `vmlx run <model>` command
+- `vllmlx run <model>` command
 - Simple `>` prompt with readline
 - Streaming output display
 - Ctrl+C handling
 - History support (optional)
 
 **Deliverables:**
-- `vmlx run qwen2-vl-7b` starts chat
+- `vllmlx run qwen2-vl-7b` starts chat
 - Responses stream to terminal
 - Clean exit on Ctrl+C
 
@@ -643,7 +643,7 @@ Force unload current model (used by `vmlx daemon restart`).
 - GitHub release
 
 **Deliverables:**
-- Published to PyPI as `vmlx`
+- Published to PyPI as `vllmlx`
 - Complete documentation
 - GitHub repo with CI
 
@@ -681,12 +681,12 @@ Force unload current model (used by `vmlx daemon restart`).
 
 ### Acceptance Criteria (from PRD)
 
-- [ ] `uv tool install vmlx` succeeds
-- [ ] `vmlx pull qwen2-vl-2b` downloads model
+- [ ] `uv tool install vllmlx` succeeds
+- [ ] `vllmlx pull qwen2-vl-2b` downloads model
 - [ ] After reboot, `curl localhost:11434/v1/models` works without manual intervention
-- [ ] `vmlx ls` shows model name, size
-- [ ] `vmlx rm` removes model
-- [ ] `vmlx run` provides interactive chat
+- [ ] `vllmlx ls` shows model name, size
+- [ ] `vllmlx rm` removes model
+- [ ] `vllmlx run` provides interactive chat
 - [ ] Model unloads after idle timeout
 - [ ] Daemon process uses <50MB RAM when no model loaded
 
@@ -704,13 +704,13 @@ Force unload current model (used by `vmlx daemon restart`).
 
 ## Implementation Details
 
-**Feature Branch:** `feat/vmlx`  
+**Feature Branch:** `feat/vllmlx`  
 **Base Branch:** `main`
 
 This feature will be implemented using the feature branch orchestration pattern:
-1. All phase branches created from `feat/vmlx`
-2. Phases merge back to `feat/vmlx`
-3. Single PR from `feat/vmlx` to `main` when complete
+1. All phase branches created from `feat/vllmlx`
+2. Phases merge back to `feat/vllmlx`
+3. Single PR from `feat/vllmlx` to `main` when complete
 
 ---
 
@@ -721,20 +721,20 @@ This feature will be implemented using the feature branch orchestration pattern:
 | Alias registry format | Python dict in code + TOML overrides |
 | Multiple simultaneous models | Not supported - hot-swap only |
 | Health endpoint format | Simple `{"status": "ok"}` |
-| Log location | `~/.vmlx/logs/daemon.log` |
+| Log location | `~/.vllmlx/logs/daemon.log` |
 
 ---
 
 ## Appendix: Directory Structure
 
 ```
-vmlx/
+vllmlx/
 ├── pyproject.toml
 ├── README.md
 ├── src/
-│   └── vmlx/
+│   └── vllmlx/
 │       ├── __init__.py
-│       ├── __main__.py          # Entry point for `python -m vmlx`
+│       ├── __main__.py          # Entry point for `python -m vllmlx`
 │       ├── cli/
 │       │   ├── __init__.py
 │       │   ├── main.py          # Click app

@@ -1,9 +1,9 @@
 # Task: Documentation & Release
 
 **Phase**: 6  
-**Branch**: `feat/vmlx-phase-6`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-6`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: pending  
 **Depends On**: Phase 3, Phase 4, Phase 5
 
@@ -23,7 +23,7 @@ Complete documentation, CI/CD setup, and prepare for PyPI release.
 - [ ] GitHub Actions CI (lint, test on macOS)
 - [ ] GitHub Actions release workflow (publish to PyPI)
 - [ ] `pyproject.toml` has all metadata for PyPI
-- [ ] Package installable via `pip install vmlx`
+- [ ] Package installable via `pip install vllmlx`
 - [ ] All existing tests still pass
 - [ ] Lint clean
 
@@ -49,14 +49,14 @@ Complete documentation, CI/CD setup, and prepare for PyPI release.
 ### README.md
 
 ```markdown
-# vmlx
+# vllmlx
 
 Ollama-style CLI for [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) - Run Vision Language Models on Apple Silicon with a persistent daemon and simple commands.
 
 ## Features
 
 - 🚀 **Always-on daemon** - API available immediately after install, survives reboots
-- 🎯 **Simple CLI** - `vmlx pull`, `vmlx run`, `vmlx ls` - familiar Ollama-style commands
+- 🎯 **Simple CLI** - `vllmlx pull`, `vllmlx run`, `vllmlx ls` - familiar Ollama-style commands
 - 🔄 **Hot-swap models** - Switch models on-the-fly without restarting
 - 💾 **Smart memory** - Auto-unloads models after idle timeout
 - 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:11434`
@@ -65,18 +65,18 @@ Ollama-style CLI for [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) - Run Vision 
 
 ```bash
 # Install
-pip install vmlx
+pip install vllmlx
 # Or with uv (recommended)
-uv tool install vmlx
+uv tool install vllmlx
 
 # Pull a model
-vmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b
 
 # Start the daemon (auto-starts on login after this)
-vmlx daemon start
+vllmlx daemon start
 
 # Chat interactively
-vmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b
 
 # Or use the API
 curl http://localhost:11434/v1/chat/completions \
@@ -97,20 +97,20 @@ curl http://localhost:11434/v1/chat/completions \
 ### Using uv (Recommended)
 
 ```bash
-uv tool install vmlx
+uv tool install vllmlx
 ```
 
 ### Using pip
 
 ```bash
-pip install vmlx
+pip install vllmlx
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/vmlx
-cd vmlx
+git clone https://github.com/yourusername/vllmlx
+cd vllmlx
 pip install -e .
 ```
 
@@ -118,20 +118,20 @@ pip install -e .
 
 | Command | Description |
 |---------|-------------|
-| `vmlx pull <model>` | Download a model |
-| `vmlx ls` | List downloaded models |
-| `vmlx rm <model>` | Remove a model |
-| `vmlx run <model>` | Interactive chat |
-| `vmlx serve` | Run server in foreground |
-| `vmlx daemon start` | Start background daemon |
-| `vmlx daemon stop` | Stop daemon |
-| `vmlx daemon status` | Check daemon status |
-| `vmlx daemon logs` | View daemon logs |
-| `vmlx config` | Show configuration |
+| `vllmlx pull <model>` | Download a model |
+| `vllmlx ls` | List downloaded models |
+| `vllmlx rm <model>` | Remove a model |
+| `vllmlx run <model>` | Interactive chat |
+| `vllmlx serve` | Run server in foreground |
+| `vllmlx daemon start` | Start background daemon |
+| `vllmlx daemon stop` | Stop daemon |
+| `vllmlx daemon status` | Check daemon status |
+| `vllmlx daemon logs` | View daemon logs |
+| `vllmlx config` | Show configuration |
 
 ## Available Models
 
-vmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
+vllmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
 
 | Alias | Model |
 |-------|-------|
@@ -143,12 +143,12 @@ vmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
 You can also use full HuggingFace paths:
 
 ```bash
-vmlx pull mlx-community/Some-Other-Model-4bit
+vllmlx pull mlx-community/Some-Other-Model-4bit
 ```
 
 ## Configuration
 
-Config file: `~/.vmlx/config.toml`
+Config file: `~/.vllmlx/config.toml`
 
 ```toml
 [daemon]
@@ -166,13 +166,13 @@ my-model = "mlx-community/Custom-Model-4bit"
 Set values via CLI:
 
 ```bash
-vmlx config set daemon.idle_timeout 120
-vmlx config set models.default qwen2-vl-7b
+vllmlx config set daemon.idle_timeout 120
+vllmlx config set models.default qwen2-vl-7b
 ```
 
 ## API
 
-vmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
+vllmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
 
 ### Chat Completions
 
@@ -285,7 +285,7 @@ jobs:
 
 ```toml
 [project]
-name = "vmlx"
+name = "vllmlx"
 version = "0.1.0"
 description = "Ollama-style CLI for MLX-VLM - Vision Language Models on Apple Silicon"
 readme = "README.md"
@@ -326,20 +326,20 @@ dev = [
 ]
 
 [project.scripts]
-vmlx = "vmlx.cli.main:cli"
+vllmlx = "vllmlx.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/vmlx"
-Documentation = "https://github.com/yourusername/vmlx#readme"
-Repository = "https://github.com/yourusername/vmlx"
-Issues = "https://github.com/yourusername/vmlx/issues"
+Homepage = "https://github.com/yourusername/vllmlx"
+Documentation = "https://github.com/yourusername/vllmlx#readme"
+Repository = "https://github.com/yourusername/vllmlx"
+Issues = "https://github.com/yourusername/vllmlx/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/vmlx"]
+packages = ["src/vllmlx"]
 
 [tool.ruff]
 target-version = "py312"
@@ -368,13 +368,13 @@ markers = [
 The daemon isn't running. Start it:
 
 ```bash
-vmlx daemon start
+vllmlx daemon start
 ```
 
 If it fails to start, check logs:
 
 ```bash
-vmlx daemon logs
+vllmlx daemon logs
 ```
 
 ### Daemon won't start
@@ -386,14 +386,14 @@ vmlx daemon logs
 
 2. Check plist is valid:
    ```bash
-   plutil ~/Library/LaunchAgents/com.vmlx.daemon.plist
+   plutil ~/Library/LaunchAgents/com.vllmlx.daemon.plist
    ```
 
 3. Remove and reinstall:
    ```bash
-   vmlx daemon stop
-   rm ~/Library/LaunchAgents/com.vmlx.daemon.plist
-   vmlx daemon start
+   vllmlx daemon stop
+   rm ~/Library/LaunchAgents/com.vllmlx.daemon.plist
+   vllmlx daemon start
    ```
 
 ### Daemon uses too much memory
@@ -401,8 +401,8 @@ vmlx daemon logs
 Reduce idle timeout to unload model faster:
 
 ```bash
-vmlx config set daemon.idle_timeout 30
-vmlx daemon restart
+vllmlx config set daemon.idle_timeout 30
+vllmlx daemon restart
 ```
 
 ## Model Issues
@@ -412,8 +412,8 @@ vmlx daemon restart
 Make sure the model is downloaded:
 
 ```bash
-vmlx ls  # Check downloaded models
-vmlx pull qwen2-vl-7b  # Download if needed
+vllmlx ls  # Check downloaded models
+vllmlx pull qwen2-vl-7b  # Download if needed
 ```
 
 ### Model loading is slow
@@ -430,8 +430,8 @@ For faster startup, use smaller models:
 Your Mac doesn't have enough RAM for the model. Try a smaller model:
 
 ```bash
-vmlx rm qwen2.5-vl-32b
-vmlx pull qwen2-vl-2b
+vllmlx rm qwen2.5-vl-32b
+vllmlx pull qwen2-vl-2b
 ```
 
 ## API Issues
@@ -465,9 +465,9 @@ Images must be base64 encoded in the `image_url` field:
 
 ## Getting Help
 
-1. Check daemon logs: `vmlx daemon logs`
-2. Check daemon status: `vmlx daemon status`
-3. Open an issue: https://github.com/yourusername/vmlx/issues
+1. Check daemon logs: `vllmlx daemon logs`
+2. Check daemon status: `vllmlx daemon status`
+3. Open an issue: https://github.com/yourusername/vllmlx/issues
 ```
 
 ### LICENSE
@@ -524,7 +524,7 @@ ruff check src tests
     ```bash
     pip install build
     python -m build
-    pip install dist/vmlx-0.1.0-py3-none-any.whl
-    vmlx --help
+    pip install dist/vllmlx-0.1.0-py3-none-any.whl
+    vllmlx --help
     ```
 11. Commit with `wt commit`

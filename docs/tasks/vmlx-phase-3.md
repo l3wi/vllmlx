@@ -1,9 +1,9 @@
 # Task: Idle Management
 
 **Phase**: 3  
-**Branch**: `feat/vmlx-phase-3`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-3`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: pending  
 **Parallel With**: Phase 4, Phase 5
 
@@ -18,12 +18,12 @@ Implement idle timeout that unloads the model from memory after configurable ina
 ## Acceptance Criteria
 
 - [ ] Model unloads automatically after idle timeout (default 60s)
-- [ ] Idle timeout configurable via `vmlx config set daemon.idle_timeout 120`
+- [ ] Idle timeout configurable via `vllmlx config set daemon.idle_timeout 120`
 - [ ] RAM usage returns to <50MB after model unload
 - [ ] New request after unload triggers reload (cold start)
 - [ ] Requests during model transition are queued, not rejected
 - [ ] Timer resets on each request
-- [ ] `GET /status` shows `idle_seconds_remaining` when model loaded
+- [ ] `GET /v1/status` shows `idle_seconds_remaining` when model loaded
 - [ ] Unload logged with model name and idle duration
 - [ ] All tests pass
 - [ ] Lint clean
@@ -34,10 +34,10 @@ Implement idle timeout that unloads the model from memory after configurable ina
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/vmlx/daemon/idle.py` | create | IdleTimer class with asyncio task |
-| `src/vmlx/daemon/state.py` | modify | Add idle tracking fields |
-| `src/vmlx/daemon/server.py` | modify | Start/stop idle timer in lifespan |
-| `src/vmlx/daemon/routes.py` | modify | Update /status endpoint |
+| `src/vllmlx/daemon/idle.py` | create | IdleTimer class with asyncio task |
+| `src/vllmlx/daemon/state.py` | modify | Add idle tracking fields |
+| `src/vllmlx/daemon/server.py` | modify | Start/stop idle timer in lifespan |
+| `src/vllmlx/daemon/routes.py` | modify | Update /v1/status endpoint |
 | `tests/unit/test_idle.py` | create | Unit tests for idle timer logic |
 | `tests/integration/test_idle_timeout.py` | create | Integration test for timeout |
 
@@ -138,7 +138,7 @@ class IdleTimer:
 Add to DaemonState:
 
 ```python
-from vmlx.daemon.idle import IdleTimer
+from vllmlx.daemon.idle import IdleTimer
 
 @dataclass
 class DaemonState:
@@ -172,7 +172,7 @@ class DaemonState:
         """Callback when idle timeout triggers."""
         async with self.lock:
             if self.model:
-                from vmlx.models.manager import ModelManager
+                from vllmlx.models.manager import ModelManager
                 model_name = self.loaded_model_name
                 ModelManager.unload_model(self.model, self.processor)
                 self.model = None
@@ -222,10 +222,10 @@ async def chat_completions(request: ChatCompletionRequest):
     # ... rest of handler ...
 ```
 
-Update /status endpoint:
+Update /v1/status endpoint:
 
 ```python
-@router.get("/status")
+@router.get("/v1/status")
 async def status():
     state = get_state()
     return {
@@ -284,7 +284,7 @@ def unload_model(model: Any, processor: Any) -> None:
 ```python
 import pytest
 import asyncio
-from vmlx.daemon.idle import IdleTimer
+from vllmlx.daemon.idle import IdleTimer
 
 @pytest.mark.asyncio
 async def test_timer_triggers_after_timeout():
@@ -338,7 +338,7 @@ async def test_model_unloads_after_idle(test_client, loaded_model):
     # Configure short timeout for test
     # Make a request to load model
     # Wait for timeout + buffer
-    # Check /status shows no loaded model
+    # Check /v1/status shows no loaded model
     # Check memory returned to baseline
     pass
 ```
@@ -351,17 +351,17 @@ async def test_model_unloads_after_idle(test_client, loaded_model):
 2. Create `IdleTimer` class with asyncio background task
 3. Modify `DaemonState` to integrate idle tracking
 4. Update routes to start timer on model load, touch on request
-5. Update `/status` endpoint with idle info
+5. Update `/v1/status` endpoint with idle info
 6. Ensure memory cleanup is thorough
 7. Write unit tests for timer logic (fast, no model loading)
 8. Write integration test (can be marked slow)
 9. Test manually:
    ```bash
-   vmlx config set daemon.idle_timeout 30
-   vmlx serve &
+   vllmlx config set daemon.idle_timeout 30
+   vllmlx serve &
    curl -X POST localhost:11434/v1/chat/completions -d '{"model":"qwen2-vl-2b","messages":[{"role":"user","content":"hi"}]}'
    # Wait 30+ seconds
-   curl localhost:11434/status  # Should show no loaded model
+   curl localhost:11434/v1/status  # Should show no loaded model
    ```
 10. Run `ruff check` and `pytest`
 11. Commit with `wt commit`

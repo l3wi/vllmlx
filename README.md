@@ -1,11 +1,20 @@
-# vmlx
+# vllmlx
 
-Ollama-style CLI for [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) - Run Vision Language Models on Apple Silicon with a persistent daemon and simple commands.
+Ollama-style daemon and CLI for [vllm-mlx](https://github.com/waybarrios/vllm-mlx).
+
+## Breaking Change
+
+`vmlx` is discontinued. This package is hard-cut renamed to `vllmlx` with no compatibility layer:
+
+- no `vmlx` CLI alias
+- no `vmlx` Python package import
+- no `~/.vmlx` config path
+- no legacy `/status` route
 
 ## Features
 
 - 🚀 **Always-on daemon** - API available immediately after install, survives reboots
-- 🎯 **Simple CLI** - `vmlx pull`, `vmlx run`, `vmlx ls` - familiar Ollama-style commands
+- 🎯 **Simple CLI** - `vllmlx pull`, `vllmlx run`, `vllmlx ls` - familiar Ollama-style commands
 - 🔄 **Hot-swap models** - Switch models on-the-fly without restarting
 - 💾 **Smart memory** - Auto-unloads models after idle timeout
 - 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:11434`
@@ -14,18 +23,18 @@ Ollama-style CLI for [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) - Run Vision 
 
 ```bash
 # Install
-pip install vmlx
+pip install vllmlx
 # Or with uv (recommended)
-uv tool install vmlx
+uv tool install vllmlx
 
 # Pull a model
-vmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b
 
 # Start the daemon (auto-starts on login after this)
-vmlx daemon start
+vllmlx daemon start
 
 # Chat interactively
-vmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b
 
 # Or use the API
 curl http://localhost:11434/v1/chat/completions \
@@ -46,20 +55,20 @@ curl http://localhost:11434/v1/chat/completions \
 ### Using uv (Recommended)
 
 ```bash
-uv tool install vmlx
+uv tool install vllmlx
 ```
 
 ### Using pip
 
 ```bash
-pip install vmlx
+pip install vllmlx
 ```
 
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/vmlx
-cd vmlx
+git clone https://github.com/yourusername/vllmlx
+cd vllmlx
 pip install -e .
 ```
 
@@ -69,25 +78,25 @@ For detailed installation instructions, see [docs/installation.md](docs/installa
 
 | Command | Description |
 |---------|-------------|
-| `vmlx pull <model>` | Download a model |
-| `vmlx ls` | List downloaded models |
-| `vmlx rm <model>` | Remove a model |
-| `vmlx run <model>` | Interactive chat |
-| `vmlx serve` | Run server in foreground |
-| `vmlx daemon start` | Start background daemon |
-| `vmlx daemon stop` | Stop daemon |
-| `vmlx daemon restart` | Restart daemon |
-| `vmlx daemon status` | Check daemon status |
-| `vmlx daemon logs` | View daemon logs |
-| `vmlx config` | Show configuration |
-| `vmlx config set` | Set configuration value |
-| `vmlx config get` | Get configuration value |
+| `vllmlx pull <model>` | Download a model |
+| `vllmlx ls` | List downloaded models |
+| `vllmlx rm <model>` | Remove a model |
+| `vllmlx run <model>` | Interactive chat |
+| `vllmlx serve` | Run server in foreground |
+| `vllmlx daemon start` | Start background daemon |
+| `vllmlx daemon stop` | Stop daemon |
+| `vllmlx daemon restart` | Restart daemon |
+| `vllmlx daemon status` | Check daemon status |
+| `vllmlx daemon logs` | View daemon logs |
+| `vllmlx config` | Show configuration |
+| `vllmlx config set` | Set configuration value |
+| `vllmlx config get` | Get configuration value |
 
 For complete command reference, see [docs/cli-reference.md](docs/cli-reference.md).
 
 ## Available Models
 
-vmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
+vllmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
 
 | Alias | Model |
 |-------|-------|
@@ -104,12 +113,12 @@ vmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
 You can also use full HuggingFace paths:
 
 ```bash
-vmlx pull mlx-community/Some-Other-Model-4bit
+vllmlx pull mlx-community/Some-Other-Model-4bit
 ```
 
 ## Configuration
 
-Config file: `~/.vmlx/config.toml`
+Config file: `~/.vllmlx/config.toml`
 
 ```toml
 [daemon]
@@ -128,13 +137,13 @@ my-model = "mlx-community/Custom-Model-4bit"
 Set values via CLI:
 
 ```bash
-vmlx config set daemon.idle_timeout 120
-vmlx config set models.default qwen2-vl-7b
+vllmlx config set daemon.idle_timeout 120
+vllmlx config set models.default qwen2-vl-7b
 ```
 
 ## API
 
-vmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
+vllmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
 
 ### Chat Completions
 
@@ -171,7 +180,7 @@ curl http://localhost:11434/health
 ### Status
 
 ```bash
-curl http://localhost:11434/status
+curl http://localhost:11434/v1/status
 ```
 
 ## Troubleshooting

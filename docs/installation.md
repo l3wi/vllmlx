@@ -8,47 +8,47 @@
 
 ## Using uv (Recommended)
 
-[uv](https://docs.astral.sh/uv/) is the recommended way to install vmlx. It's fast and handles Python version management automatically.
+[uv](https://docs.astral.sh/uv/) is the recommended way to install vllmlx. It's fast and handles Python version management automatically.
 
 ```bash
 # Install uv if you don't have it
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install vmlx as a tool
-uv tool install vmlx
+# Install vllmlx as a tool
+uv tool install vllmlx
 ```
 
 ## Using pip
 
 ```bash
-pip install vmlx
+pip install vllmlx
 ```
 
 Or with a specific Python version:
 
 ```bash
-python3.12 -m pip install vmlx
+python3.12 -m pip install vllmlx
 ```
 
 ## Using pipx
 
 ```bash
-pipx install vmlx
+pipx install vllmlx
 ```
 
 ## From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vmlx
-cd vmlx
+git clone https://github.com/yourusername/vllmlx
+cd vllmlx
 
 # Install with pip
 pip install -e .
 
 # Or with uv
 uv sync
-uv run vmlx --help
+uv run vllmlx --help
 ```
 
 ## Post-Installation
@@ -59,10 +59,10 @@ Download your first model:
 
 ```bash
 # Recommended starter model (~2GB)
-vmlx pull qwen2-vl-2b
+vllmlx pull qwen2-vl-2b
 
 # Or a larger, more capable model (~5GB)
-vmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b
 ```
 
 ### 2. Start the Daemon
@@ -70,7 +70,7 @@ vmlx pull qwen2-vl-7b
 Start the background service that provides the API:
 
 ```bash
-vmlx daemon start
+vllmlx daemon start
 ```
 
 This installs a launchd service that:
@@ -82,13 +82,13 @@ This installs a launchd service that:
 
 ```bash
 # Check daemon status
-vmlx daemon status
+vllmlx daemon status
 
 # Test the API
 curl http://localhost:11434/health
 
 # Start an interactive chat
-vmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b
 ```
 
 ## Updating
@@ -96,19 +96,19 @@ vmlx run qwen2-vl-7b
 ### With uv
 
 ```bash
-uv tool upgrade vmlx
+uv tool upgrade vllmlx
 ```
 
 ### With pip
 
 ```bash
-pip install --upgrade vmlx
+pip install --upgrade vllmlx
 ```
 
 After updating, restart the daemon to use the new version:
 
 ```bash
-vmlx daemon restart
+vllmlx daemon restart
 ```
 
 ## Uninstalling
@@ -116,37 +116,37 @@ vmlx daemon restart
 ### 1. Stop and Remove the Daemon
 
 ```bash
-vmlx daemon stop
-rm ~/Library/LaunchAgents/com.vmlx.daemon.plist
+vllmlx daemon stop
+rm ~/Library/LaunchAgents/com.vllmlx.daemon.plist
 ```
 
 ### 2. Remove Models (Optional)
 
 ```bash
 # List models
-vmlx ls
+vllmlx ls
 
 # Remove each model
-vmlx rm qwen2-vl-7b --force
+vllmlx rm qwen2-vl-7b --force
 ```
 
 ### 3. Remove Configuration (Optional)
 
 ```bash
-rm -rf ~/.vmlx
+rm -rf ~/.vllmlx
 ```
 
 ### 4. Uninstall the Package
 
 ```bash
 # If installed with uv
-uv tool uninstall vmlx
+uv tool uninstall vllmlx
 
 # If installed with pip
-pip uninstall vmlx
+pip uninstall vllmlx
 
 # If installed with pipx
-pipx uninstall vmlx
+pipx uninstall vllmlx
 ```
 
 ## Verifying Installation
@@ -154,14 +154,14 @@ pipx uninstall vmlx
 Run the following commands to verify your installation:
 
 ```bash
-# Check vmlx is installed
-vmlx --version
+# Check vllmlx is installed
+vllmlx --version
 
 # Check daemon is working
-vmlx daemon status
+vllmlx daemon status
 
 # List downloaded models
-vmlx ls
+vllmlx ls
 
 # Test API (requires daemon running)
 curl -s http://localhost:11434/health
@@ -176,10 +176,10 @@ Models are stored in the HuggingFace cache directory:
 ~/.cache/huggingface/hub/
 ```
 
-vmlx configuration is stored in:
+vllmlx configuration is stored in:
 
 ```
-~/.vmlx/
+~/.vllmlx/
 ├── config.toml      # Configuration file
 └── logs/
     ├── daemon.log       # Standard output
@@ -188,9 +188,9 @@ vmlx configuration is stored in:
 
 ## Troubleshooting Installation
 
-### "command not found: vmlx"
+### "command not found: vllmlx"
 
-The vmlx binary is not in your PATH. Check your shell configuration:
+The vllmlx binary is not in your PATH. Check your shell configuration:
 
 ```bash
 # For uv tool installs, add to your shell profile:
@@ -202,7 +202,7 @@ source ~/.zshrc  # or ~/.bashrc
 
 ### Python version errors
 
-vmlx requires Python 3.11+. Check your Python version:
+vllmlx requires Python 3.11+. Check your Python version:
 
 ```bash
 python3 --version
@@ -227,7 +227,7 @@ uname -m
 # Should output: arm64
 ```
 
-If you're on Intel Mac, vmlx is not supported.
+If you're on Intel Mac, vllmlx is not supported.
 
 ### For more troubleshooting help
 

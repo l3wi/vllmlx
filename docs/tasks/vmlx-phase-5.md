@@ -1,9 +1,9 @@
 # Task: Interactive Chat
 
 **Phase**: 5  
-**Branch**: `feat/vmlx-phase-5`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-5`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: pending  
 **Parallel With**: Phase 3, Phase 4
 
@@ -11,14 +11,14 @@
 
 ## Objective
 
-Implement simple interactive chat REPL via `vmlx run <model>` that connects to the daemon API with streaming output.
+Implement simple interactive chat REPL via `vllmlx run <model>` that connects to the daemon API with streaming output.
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `vmlx run qwen2-vl-7b` starts interactive chat session
-- [ ] `vmlx run` without model uses config default (if set)
+- [ ] `vllmlx run qwen2-vl-7b` starts interactive chat session
+- [ ] `vllmlx run` without model uses config default (if set)
 - [ ] Simple `> ` prompt accepts text input
 - [ ] Responses stream to terminal in real-time
 - [ ] Multi-line input supported (paste or Shift+Enter awareness)
@@ -37,9 +37,9 @@ Implement simple interactive chat REPL via `vmlx run <model>` that connects to t
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/vmlx/cli/run.py` | create | `vmlx run` command |
-| `src/vmlx/chat/__init__.py` | create | Chat module init |
-| `src/vmlx/chat/repl.py` | create | REPL implementation |
+| `src/vllmlx/cli/run.py` | create | `vllmlx run` command |
+| `src/vllmlx/chat/__init__.py` | create | Chat module init |
+| `src/vllmlx/chat/repl.py` | create | REPL implementation |
 | `tests/unit/test_repl.py` | create | REPL logic tests |
 
 ---
@@ -59,7 +59,7 @@ from rich.live import Live
 console = Console()
 
 class ChatSession:
-    """Interactive chat session with the vmlx daemon."""
+    """Interactive chat session with the vllmlx daemon."""
     
     def __init__(self, model: str, api_url: str = "http://127.0.0.1:11434"):
         self.model = model
@@ -108,7 +108,7 @@ class ChatSession:
                 
         except httpx.ConnectError:
             console.print("[red]Error: Cannot connect to daemon. Is it running?[/red]")
-            console.print("[dim]Try: vmlx daemon start[/dim]")
+            console.print("[dim]Try: vllmlx daemon start[/dim]")
             self.messages.pop()  # Remove failed message
             return None
         except KeyboardInterrupt:
@@ -220,7 +220,7 @@ class ChatSession:
     def _show_welcome(self) -> None:
         """Show welcome message."""
         console.print(f"""
-[bold]vmlx chat[/bold] - Model: [cyan]{self.model}[/cyan]
+[bold]vllmlx chat[/bold] - Model: [cyan]{self.model}[/cyan]
 Type your message and press Enter. Use /help for commands.
 """)
 
@@ -247,9 +247,9 @@ def run(model: str = None):
     MODEL is the model name or alias (e.g., qwen2-vl-7b).
     If not provided, uses the default model from config.
     """
-    from vmlx.config import Config
-    from vmlx.models.aliases import resolve_alias
-    from vmlx.chat.repl import start_chat
+    from vllmlx.config import Config
+    from vllmlx.models.aliases import resolve_alias
+    from vllmlx.chat.repl import start_chat
     import httpx
     
     config = Config.load()
@@ -260,8 +260,8 @@ def run(model: str = None):
             model = config.models.default
         else:
             console.print("[red]Error: No model specified and no default set[/red]")
-            console.print("[dim]Usage: vmlx run <model>[/dim]")
-            console.print("[dim]Or set default: vmlx config set models.default qwen2-vl-7b[/dim]")
+            console.print("[dim]Usage: vllmlx run <model>[/dim]")
+            console.print("[dim]Or set default: vllmlx config set models.default qwen2-vl-7b[/dim]")
             raise SystemExit(1)
     
     # Resolve alias
@@ -275,7 +275,7 @@ def run(model: str = None):
             raise httpx.ConnectError("Unhealthy")
     except (httpx.ConnectError, httpx.TimeoutException):
         console.print("[red]Error: Daemon is not running[/red]")
-        console.print("[dim]Start it with: vmlx daemon start[/dim]")
+        console.print("[dim]Start it with: vllmlx daemon start[/dim]")
         raise SystemExit(1)
     
     # Start chat
@@ -285,7 +285,7 @@ def run(model: str = None):
 ### Register Command (main.py)
 
 ```python
-from vmlx.cli.run import run
+from vllmlx.cli.run import run
 
 cli.add_command(run)
 ```
@@ -310,7 +310,7 @@ For multi-line paste:
 ```python
 import pytest
 from unittest.mock import Mock, patch
-from vmlx.chat.repl import ChatSession
+from vllmlx.chat.repl import ChatSession
 
 def test_add_user_message():
     session = ChatSession("test-model")
@@ -359,7 +359,7 @@ def test_handle_unknown_command():
     
     assert result == True  # Don't exit on unknown command
 
-@patch("vmlx.chat.repl.httpx")
+@patch("vllmlx.chat.repl.httpx")
 def test_send_message_connection_error(mock_httpx):
     mock_httpx.stream.side_effect = httpx.ConnectError("Connection refused")
     
@@ -383,8 +383,8 @@ def test_send_message_connection_error(mock_httpx):
 7. Write unit tests for session logic (mock HTTP)
 8. Test manually:
    ```bash
-   vmlx daemon start
-   vmlx run qwen2-vl-2b
+   vllmlx daemon start
+   vllmlx run qwen2-vl-2b
    > Hello, what can you do?
    [streaming response...]
    > /help
@@ -393,8 +393,8 @@ def test_send_message_connection_error(mock_httpx):
    ```
 9. Test error cases:
    ```bash
-   vmlx daemon stop
-   vmlx run qwen2-vl-2b  # Should show "daemon not running"
+   vllmlx daemon stop
+   vllmlx run qwen2-vl-2b  # Should show "daemon not running"
    ```
 10. Run `ruff check` and `pytest`
 11. Commit with `wt commit`

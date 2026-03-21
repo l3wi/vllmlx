@@ -1,1 +1,1 @@
-"""Integration tests for vmlx."""
+"""Integration tests for vllmlx."""

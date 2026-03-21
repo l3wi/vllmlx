@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Common issues and solutions for vmlx.
+Common issues and solutions for vllmlx.
 
 ## Daemon Issues
 
@@ -9,13 +9,13 @@ Common issues and solutions for vmlx.
 The daemon isn't running. Start it:
 
 ```bash
-vmlx daemon start
+vllmlx daemon start
 ```
 
 If it fails to start, check logs:
 
 ```bash
-vmlx daemon logs
+vllmlx daemon logs
 ```
 
 ### Daemon won't start
@@ -26,35 +26,35 @@ vmlx daemon logs
 lsof -i :11434
 ```
 
-If another process is using the port, either stop it or change vmlx's port:
+If another process is using the port, either stop it or change vllmlx's port:
 
 ```bash
-vmlx config set daemon.port 8080
-vmlx daemon start
+vllmlx config set daemon.port 8080
+vllmlx daemon start
 ```
 
 #### 2. Check plist is valid
 
 ```bash
-plutil ~/Library/LaunchAgents/com.vmlx.daemon.plist
+plutil ~/Library/LaunchAgents/com.vllmlx.daemon.plist
 ```
 
 #### 3. Check launchd logs
 
 ```bash
 # Check if launchd loaded the service
-launchctl list | grep vmlx
+launchctl list | grep vllmlx
 
 # Check system log for errors
-log show --predicate 'process == "launchd"' --last 5m | grep vmlx
+log show --predicate 'process == "launchd"' --last 5m | grep vllmlx
 ```
 
 #### 4. Remove and reinstall
 
 ```bash
-vmlx daemon stop
-rm ~/Library/LaunchAgents/com.vmlx.daemon.plist
-vmlx daemon start
+vllmlx daemon stop
+rm ~/Library/LaunchAgents/com.vllmlx.daemon.plist
+vllmlx daemon start
 ```
 
 ### Daemon uses too much memory
@@ -63,8 +63,8 @@ When a model is loaded, it uses significant RAM. To reduce idle memory usage:
 
 1. **Reduce idle timeout** to unload model faster:
    ```bash
-   vmlx config set daemon.idle_timeout 30
-   vmlx daemon restart
+   vllmlx config set daemon.idle_timeout 30
+   vllmlx daemon restart
    ```
 
 2. **Use smaller models**:
@@ -77,11 +77,11 @@ When a model is loaded, it uses significant RAM. To reduce idle memory usage:
 Check error logs:
 
 ```bash
-cat ~/.vmlx/logs/daemon.error.log
+cat ~/.vllmlx/logs/daemon.error.log
 ```
 
 Common causes:
-- Corrupted model files (re-download with `vmlx pull`)
+- Corrupted model files (re-download with `vllmlx pull`)
 - Insufficient system resources
 - Python version mismatch
 
@@ -95,10 +95,10 @@ Make sure the model is downloaded:
 
 ```bash
 # Check downloaded models
-vmlx ls
+vllmlx ls
 
 # Download if needed
-vmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b
 ```
 
 ### Model alias not recognized
@@ -115,7 +115,7 @@ llava-qwen-0.5b, llava-qwen-7b
 Or use the full HuggingFace path:
 
 ```bash
-vmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
+vllmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
 ```
 
 ### Model loading is slow
@@ -133,8 +133,8 @@ For faster startup:
 If a download is interrupted, the model may be corrupted. Remove and re-download:
 
 ```bash
-vmlx rm qwen2-vl-7b --force
-vmlx pull qwen2-vl-7b
+vllmlx rm qwen2-vl-7b --force
+vllmlx pull qwen2-vl-7b
 ```
 
 ### Out of memory
@@ -163,10 +163,10 @@ The daemon is not running or listening on a different port:
 
 ```bash
 # Check daemon status
-vmlx daemon status
+vllmlx daemon status
 
 # Verify port setting
-vmlx config get daemon.port
+vllmlx config get daemon.port
 ```
 
 ### Slow response times
@@ -175,7 +175,7 @@ First request after idle timeout is slow because the model needs to load:
 
 1. Increase idle timeout:
    ```bash
-   vmlx config set daemon.idle_timeout 300
+   vllmlx config set daemon.idle_timeout 300
    ```
 
 2. Keep model loaded with periodic health checks:
@@ -245,9 +245,9 @@ url = f"data:image/jpeg;base64,{image_b64}"
 
 ## CLI Issues
 
-### "command not found: vmlx"
+### "command not found: vllmlx"
 
-The vmlx binary is not in your PATH:
+The vllmlx binary is not in your PATH:
 
 ```bash
 # For pip/uv installs, add to ~/.zshrc or ~/.bashrc:
@@ -262,26 +262,26 @@ source ~/.zshrc
 Make sure you have write access to the config directory:
 
 ```bash
-ls -la ~/.vmlx/
+ls -la ~/.vllmlx/
 # Should be owned by your user
 
 # Fix permissions if needed
-chmod -R u+rw ~/.vmlx/
+chmod -R u+rw ~/.vllmlx/
 ```
 
 ### Config file not found
 
-vmlx creates the config file on first use. Force creation:
+vllmlx creates the config file on first use. Force creation:
 
 ```bash
-vmlx config
+vllmlx config
 ```
 
 Or create manually:
 
 ```bash
-mkdir -p ~/.vmlx
-cat > ~/.vmlx/config.toml << 'EOF'
+mkdir -p ~/.vllmlx
+cat > ~/.vllmlx/config.toml << 'EOF'
 [daemon]
 port = 11434
 host = "127.0.0.1"
@@ -303,28 +303,28 @@ EOF
 
 ```bash
 # Recent logs
-vmlx daemon logs -n 100
+vllmlx daemon logs -n 100
 
 # Follow live
-vmlx daemon logs -f
+vllmlx daemon logs -f
 ```
 
 ### 2. Check error logs
 
 ```bash
-cat ~/.vmlx/logs/daemon.error.log
+cat ~/.vllmlx/logs/daemon.error.log
 ```
 
 ### 3. Check daemon status
 
 ```bash
-vmlx daemon status
+vllmlx daemon status
 ```
 
 ### 4. Verify installation
 
 ```bash
-vmlx --version
+vllmlx --version
 python3 -c "import mlx_vlm; print(mlx_vlm.__version__)"
 ```
 
@@ -334,8 +334,8 @@ If you can't resolve the issue, open an issue on GitHub with:
 - Your macOS version (`sw_vers`)
 - Your Mac model (`system_profiler SPHardwareDataType | grep Model`)
 - Python version (`python3 --version`)
-- vmlx version (`vmlx --version`)
+- vllmlx version (`vllmlx --version`)
 - Full error message and logs
 - Steps to reproduce
 
-GitHub Issues: https://github.com/yourusername/vmlx/issues
+GitHub Issues: https://github.com/yourusername/vllmlx/issues

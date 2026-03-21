@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from vmlx.daemon.idle import IdleTimer
+from vllmlx.daemon.idle import IdleTimer
 
 
 class TestIdleTimerBasics:

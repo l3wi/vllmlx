@@ -26,7 +26,7 @@ class TestModelManagerLoadModel:
                 "mlx_vlm.utils": mock_mlx_vlm_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             model, processor, config = ModelManager.load_model("test-org/test-model")
 
@@ -48,7 +48,7 @@ class TestModelManagerLoadModel:
                 "mlx_vlm.utils": mock_mlx_vlm_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             ModelManager.load_model("mlx-community/Qwen2-VL-7B-Instruct-4bit")
 
@@ -69,7 +69,7 @@ class TestModelManagerUnloadModel:
 
         with patch.dict(sys.modules, {"mlx": MagicMock(), "mlx.core": mock_mx}):
             with patch("gc.collect") as mock_gc_collect:
-                from vmlx.models.manager import ModelManager
+                from vllmlx.models.manager import ModelManager
 
                 model = MagicMock()
                 processor = MagicMock()
@@ -86,7 +86,7 @@ class TestModelManagerUnloadModel:
 
         with patch.dict(sys.modules, {"mlx": MagicMock(), "mlx.core": mock_mx}):
             with patch("gc.collect"):
-                from vmlx.models.manager import ModelManager
+                from vllmlx.models.manager import ModelManager
 
                 model = MagicMock()
                 processor = MagicMock()
@@ -112,7 +112,7 @@ class TestModelManagerGenerateResponse:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             result = ModelManager.generate_response(
                 model=MagicMock(),
@@ -138,7 +138,7 @@ class TestModelManagerGenerateResponse:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             ModelManager.generate_response(
                 model=MagicMock(),
@@ -169,7 +169,7 @@ class TestModelManagerGenerateResponse:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             ModelManager.generate_response(
                 model=MagicMock(),
@@ -197,7 +197,7 @@ class TestModelManagerGenerateResponse:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             ModelManager.generate_response(
                 model=MagicMock(),
@@ -229,7 +229,7 @@ class TestModelManagerGenerateStreaming:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             result = list(
                 ModelManager.generate_streaming(
@@ -256,7 +256,7 @@ class TestModelManagerGenerateStreaming:
                 "mlx_vlm.prompt_utils": mock_prompt_utils,
             },
         ):
-            from vmlx.models.manager import ModelManager
+            from vllmlx.models.manager import ModelManager
 
             list(
                 ModelManager.generate_streaming(

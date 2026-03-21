@@ -2,11 +2,11 @@
 
 **Status:** Accepted  
 **Date:** 2026-01-30  
-**Context:** vmlx daemon architecture
+**Context:** vllmlx daemon architecture
 
 ## Context
 
-vmlx needs to provide an always-on API server that wraps MLX-VLM. We need to decide how the daemon interacts with MLX-VLM:
+vllmlx needs to provide an always-on API server that wraps MLX-VLM. We need to decide how the daemon interacts with MLX-VLM:
 
 1. **Subprocess wrapper**: Launch `mlx_vlm.server` as a child process, proxy requests
 2. **Fork MLX-VLM**: Copy and modify MLX-VLM's server code
@@ -61,7 +61,7 @@ The risk is that MLX-VLM's internal API (`load`, `generate`) could change. Howev
 ### Negative
 - Coupled to MLX-VLM's `load()` and `generate()` function signatures
 - Must handle streaming ourselves (wrap MLX-VLM's generator)
-- Breaking changes in MLX-VLM may require vmlx updates
+- Breaking changes in MLX-VLM may require vllmlx updates
 
 ### Mitigations
 - Pin `mlx-vlm` version in dependencies with compatible range

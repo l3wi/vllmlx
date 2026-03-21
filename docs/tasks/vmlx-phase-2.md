@@ -1,9 +1,9 @@
 # Task: Daemon & API Server
 
 **Phase**: 2  
-**Branch**: `feat/vmlx-phase-2`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-2`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: completed
 
 ---
@@ -16,7 +16,7 @@ Build the core daemon with FastAPI server exposing OpenAI-compatible endpoints, 
 
 ## Acceptance Criteria
 
-- [x] `vmlx serve` starts FastAPI server on port 11434
+- [x] `vllmlx serve` starts FastAPI server on port 11434
 - [x] `GET /health` returns `{"status": "ok"}`
 - [x] `GET /v1/models` returns list of available models
 - [x] `POST /v1/chat/completions` works with text-only messages
@@ -24,7 +24,7 @@ Build the core daemon with FastAPI server exposing OpenAI-compatible endpoints, 
 - [x] Streaming responses work (`stream: true`)
 - [x] Model loads on first request automatically
 - [x] Hot-swap: requesting different model unloads current, loads new
-- [x] `GET /status` returns daemon status (loaded model, memory, uptime)
+- [x] `GET /v1/status` returns daemon status (loaded model, memory, uptime)
 - [x] Graceful shutdown on SIGTERM
 - [x] All tests pass (71 tests)
 - [x] Lint clean
@@ -35,12 +35,12 @@ Build the core daemon with FastAPI server exposing OpenAI-compatible endpoints, 
 
 | File | Description |
 |------|-------------|
-| `src/vmlx/daemon/__init__.py` | Daemon module init |
-| `src/vmlx/daemon/server.py` | FastAPI app setup, uvicorn runner |
-| `src/vmlx/daemon/routes.py` | API endpoint handlers |
-| `src/vmlx/daemon/state.py` | DaemonState class (loaded model, timestamps) |
-| `src/vmlx/models/manager.py` | ModelManager class (load, unload, generate) |
-| `src/vmlx/cli/serve.py` | `vmlx serve` command |
+| `src/vllmlx/daemon/__init__.py` | Daemon module init |
+| `src/vllmlx/daemon/server.py` | FastAPI app setup, uvicorn runner |
+| `src/vllmlx/daemon/routes.py` | API endpoint handlers |
+| `src/vllmlx/daemon/state.py` | DaemonState class (loaded model, timestamps) |
+| `src/vllmlx/models/manager.py` | ModelManager class (load, unload, generate) |
+| `src/vllmlx/cli/serve.py` | `vllmlx serve` command |
 | `tests/integration/__init__.py` | Integration tests package |
 | `tests/integration/test_api.py` | API endpoint tests |
 
@@ -174,7 +174,7 @@ async def health():
 @router.get("/v1/models")
 async def list_models():
     # Return available models from registry
-    from vmlx.models.registry import list_models
+    from vllmlx.models.registry import list_models
     models = list_models()
     return {
         "object": "list",
@@ -191,10 +191,10 @@ async def list_models():
 
 @router.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
-    from vmlx.daemon.state import get_state
-    from vmlx.models.manager import ModelManager
-    from vmlx.models.aliases import resolve_alias
-    from vmlx.config import Config
+    from vllmlx.daemon.state import get_state
+    from vllmlx.models.manager import ModelManager
+    from vllmlx.models.aliases import resolve_alias
+    from vllmlx.config import Config
 
     state = get_state()
     config = Config.load()
@@ -240,9 +240,9 @@ from contextlib import asynccontextmanager
 import uvicorn
 import signal
 
-from vmlx.daemon.routes import router
-from vmlx.daemon.state import init_state
-from vmlx.config import Config
+from vllmlx.daemon.routes import router
+from vllmlx.daemon.state import init_state
+from vllmlx.config import Config
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -250,14 +250,14 @@ async def lifespan(app: FastAPI):
     init_state()
     yield
     # Shutdown - unload model if loaded
-    from vmlx.daemon.state import get_state
-    from vmlx.models.manager import ModelManager
+    from vllmlx.daemon.state import get_state
+    from vllmlx.models.manager import ModelManager
     state = get_state()
     if state.model:
         ModelManager.unload_model(state.model, state.processor)
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="vmlx", lifespan=lifespan)
+    app = FastAPI(title="vllmlx", lifespan=lifespan)
     app.include_router(router)
     return app
 
@@ -272,14 +272,14 @@ def run_server(host: str = "127.0.0.1", port: int = 11434):
 
 ```python
 import click
-from vmlx.config import Config
+from vllmlx.config import Config
 
 @click.command()
 @click.option("--port", default=None, type=int, help="Port to listen on")
 @click.option("--host", default=None, help="Host to bind to")
 def serve(port, host):
-    """Start the vmlx server in foreground."""
-    from vmlx.daemon.server import run_server
+    """Start the vllmlx server in foreground."""
+    from vllmlx.daemon.server import run_server
     
     config = Config.load()
     run_server(
@@ -327,7 +327,7 @@ Use `httpx` with `TestClient`:
 
 ```python
 from fastapi.testclient import TestClient
-from vmlx.daemon.server import create_app
+from vllmlx.daemon.server import create_app
 
 def test_health():
     client = TestClient(create_app())
@@ -349,16 +349,16 @@ def test_list_models():
 
 ## Agent Instructions
 
-1. Read the full spec at `docs/specs/vmlx-spec.md` for API details
+1. Read the full spec at `docs/specs/vllmlx-spec.md` for API details
 2. Implement `DaemonState` class first
 3. Implement `ModelManager` with MLX-VLM integration
 4. Build FastAPI routes following OpenAI spec
 5. Implement streaming response format
-6. Add `vmlx serve` CLI command
+6. Add `vllmlx serve` CLI command
 7. Write integration tests (mock model loading for fast tests)
 8. Test manually with curl:
    ```bash
-   vmlx serve &
+   vllmlx serve &
    curl localhost:11434/health
    curl localhost:11434/v1/models
    ```

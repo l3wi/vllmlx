@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vmlx.config import Config, DaemonConfig, ModelsConfig
+from vllmlx.config import BackendConfig, Config, DaemonConfig, ModelsConfig
 
 
 class TestDaemonConfig:
@@ -41,6 +41,29 @@ class TestModelsConfig:
         assert config.default == "qwen2-vl-7b"
 
 
+class TestBackendConfig:
+    """Tests for BackendConfig."""
+
+    def test_default_values(self):
+        config = BackendConfig()
+        assert config.host == "127.0.0.1"
+        assert config.port == 11435
+        assert config.continuous_batching is False
+        assert config.max_tokens == 32768
+
+    def test_custom_values(self):
+        config = BackendConfig(
+            port=19000,
+            continuous_batching=True,
+            max_tokens=4096,
+            reasoning_parser="qwen3",
+        )
+        assert config.port == 19000
+        assert config.continuous_batching is True
+        assert config.max_tokens == 4096
+        assert config.reasoning_parser == "qwen3"
+
+
 class TestConfig:
     """Tests for Config."""
 
@@ -48,6 +71,7 @@ class TestConfig:
         """Test default config has expected values."""
         config = Config()
         assert config.daemon.port == 11434
+        assert config.backend.port == 11435
         assert config.models.default == ""
         assert config.aliases == {}
 
@@ -55,7 +79,7 @@ class TestConfig:
         """Test config path is in home directory."""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         path = Config.path()
-        assert path == tmp_path / ".vmlx" / "config.toml"
+        assert path == tmp_path / ".vllmlx" / "config.toml"
 
     def test_load_default_when_no_file(self, tmp_path, monkeypatch):
         """Test loading returns default config when file doesn't exist."""
@@ -70,8 +94,8 @@ class TestConfig:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         config = Config()
         config.save()
-        assert (tmp_path / ".vmlx").exists()
-        assert (tmp_path / ".vmlx" / "config.toml").exists()
+        assert (tmp_path / ".vllmlx").exists()
+        assert (tmp_path / ".vllmlx" / "config.toml").exists()
 
     def test_save_and_load_roundtrip(self, tmp_path, monkeypatch):
         """Test config can be saved and loaded."""
@@ -106,6 +130,12 @@ class TestConfig:
 
         config.set("models.default", "qwen2-vl-7b")
         assert config.models.default == "qwen2-vl-7b"
+
+        config.set("backend.continuous_batching", "true")
+        assert config.backend.continuous_batching is True
+
+        config.set("backend.cache_memory_mb", "1024")
+        assert config.backend.cache_memory_mb == 1024
 
     def test_set_alias_value(self, tmp_path, monkeypatch):
         """Test setting alias config values."""

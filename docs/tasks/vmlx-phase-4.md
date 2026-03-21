@@ -1,9 +1,9 @@
 # Task: launchd Integration
 
 **Phase**: 4  
-**Branch**: `feat/vmlx-phase-4`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-4`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: pending  
 **Parallel With**: Phase 3, Phase 5
 
@@ -17,15 +17,15 @@ Implement launchd integration for persistent daemon that auto-starts on login, w
 
 ## Acceptance Criteria
 
-- [ ] `vmlx daemon start` installs plist and starts daemon
-- [ ] `vmlx daemon stop` stops daemon and unloads plist
-- [ ] `vmlx daemon restart` stops then starts
-- [ ] `vmlx daemon status` shows running/stopped, PID, uptime
-- [ ] `vmlx daemon logs` tails daemon log file
+- [ ] `vllmlx daemon start` installs plist and starts daemon
+- [ ] `vllmlx daemon stop` stops daemon and unloads plist
+- [ ] `vllmlx daemon restart` stops then starts
+- [ ] `vllmlx daemon status` shows running/stopped, PID, uptime
+- [ ] `vllmlx daemon logs` tails daemon log file
 - [ ] Daemon auto-starts on user login (RunAtLoad)
 - [ ] Daemon auto-restarts on crash (KeepAlive)
-- [ ] Plist installed to `~/Library/LaunchAgents/com.vmlx.daemon.plist`
-- [ ] Logs written to `~/.vmlx/logs/daemon.log`
+- [ ] Plist installed to `~/Library/LaunchAgents/com.vllmlx.daemon.plist`
+- [ ] Logs written to `~/.vllmlx/logs/daemon.log`
 - [ ] Graceful handling when daemon already running/stopped
 - [ ] All tests pass
 - [ ] Lint clean
@@ -36,8 +36,8 @@ Implement launchd integration for persistent daemon that auto-starts on login, w
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/vmlx/daemon/launchd.py` | create | Plist generation, launchctl commands |
-| `src/vmlx/cli/daemon_cmd.py` | create | `vmlx daemon` command group |
+| `src/vllmlx/daemon/launchd.py` | create | Plist generation, launchctl commands |
+| `src/vllmlx/cli/daemon_cmd.py` | create | `vllmlx daemon` command group |
 | `tests/unit/test_launchd.py` | create | Plist generation tests |
 | `tests/integration/test_daemon_lifecycle.py` | create | Full lifecycle tests |
 
@@ -57,7 +57,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-LABEL = "com.vmlx.daemon"
+LABEL = "com.vllmlx.daemon"
 PLIST_NAME = f"{LABEL}.plist"
 
 def get_plist_path() -> Path:
@@ -66,7 +66,7 @@ def get_plist_path() -> Path:
 
 def get_log_dir() -> Path:
     """Get path to log directory."""
-    return Path.home() / ".vmlx" / "logs"
+    return Path.home() / ".vllmlx" / "logs"
 
 def get_python_path() -> str:
     """Get path to current Python interpreter."""
@@ -83,7 +83,7 @@ def generate_plist() -> dict:
         "ProgramArguments": [
             get_python_path(),
             "-m",
-            "vmlx.daemon",
+            "vllmlx.daemon",
         ],
         "RunAtLoad": True,
         "KeepAlive": {
@@ -208,13 +208,13 @@ console = Console()
 
 @click.group()
 def daemon():
-    """Manage the vmlx daemon."""
+    """Manage the vllmlx daemon."""
     pass
 
 @daemon.command()
 def start():
-    """Start the vmlx daemon."""
-    from vmlx.daemon.launchd import (
+    """Start the vllmlx daemon."""
+    from vllmlx.daemon.launchd import (
         install_plist, load_daemon, is_daemon_running, get_plist_path
     )
     
@@ -231,15 +231,15 @@ def start():
     if load_daemon():
         console.print("[green]✓ Daemon started[/green]")
         console.print(f"  API: http://127.0.0.1:11434")
-        console.print(f"  Logs: ~/.vmlx/logs/daemon.log")
+        console.print(f"  Logs: ~/.vllmlx/logs/daemon.log")
     else:
         console.print("[red]✗ Failed to start daemon[/red]")
         raise SystemExit(1)
 
 @daemon.command()
 def stop():
-    """Stop the vmlx daemon."""
-    from vmlx.daemon.launchd import unload_daemon, is_daemon_running
+    """Stop the vllmlx daemon."""
+    from vllmlx.daemon.launchd import unload_daemon, is_daemon_running
     
     if not is_daemon_running():
         console.print("[yellow]Daemon is not running[/yellow]")
@@ -254,8 +254,8 @@ def stop():
 
 @daemon.command()
 def restart():
-    """Restart the vmlx daemon."""
-    from vmlx.daemon.launchd import unload_daemon, load_daemon, install_plist, get_plist_path
+    """Restart the vllmlx daemon."""
+    from vllmlx.daemon.launchd import unload_daemon, load_daemon, install_plist, get_plist_path
     import time
     
     console.print("Restarting daemon...")
@@ -278,14 +278,14 @@ def restart():
 @daemon.command()
 def status():
     """Show daemon status."""
-    from vmlx.daemon.launchd import is_daemon_running, get_daemon_pid
-    from vmlx.config import Config
+    from vllmlx.daemon.launchd import is_daemon_running, get_daemon_pid
+    from vllmlx.config import Config
     
     config = Config.load()
     running = is_daemon_running()
     pid = get_daemon_pid()
     
-    table = Table(title="vmlx Daemon Status")
+    table = Table(title="vllmlx Daemon Status")
     table.add_column("Property", style="cyan")
     table.add_column("Value")
     
@@ -297,7 +297,7 @@ def status():
         # Try to get extended status from API
         try:
             response = httpx.get(
-                f"http://127.0.0.1:{config.daemon.port}/status",
+                f"http://127.0.0.1:{config.daemon.port}/v1/status",
                 timeout=2.0,
             )
             if response.status_code == 200:
@@ -319,7 +319,7 @@ def logs(follow, lines):
     """View daemon logs."""
     import subprocess
     
-    log_path = Path.home() / ".vmlx" / "logs" / "daemon.log"
+    log_path = Path.home() / ".vllmlx" / "logs" / "daemon.log"
     
     if not log_path.exists():
         console.print(f"[yellow]Log file not found: {log_path}[/yellow]")
@@ -336,19 +336,19 @@ def logs(follow, lines):
 Add to CLI main:
 
 ```python
-from vmlx.cli.daemon_cmd import daemon
+from vllmlx.cli.daemon_cmd import daemon
 
 cli.add_command(daemon)
 ```
 
 ### Daemon Entry Point (__main__.py in daemon/)
 
-Create `src/vmlx/daemon/__main__.py`:
+Create `src/vllmlx/daemon/__main__.py`:
 
 ```python
-"""Entry point for running daemon directly: python -m vmlx.daemon"""
-from vmlx.daemon.server import run_server
-from vmlx.config import Config
+"""Entry point for running daemon directly: python -m vllmlx.daemon"""
+from vllmlx.daemon.server import run_server
+from vllmlx.config import Config
 
 if __name__ == "__main__":
     config = Config.load()
@@ -367,7 +367,7 @@ if __name__ == "__main__":
 ```python
 import pytest
 from pathlib import Path
-from vmlx.daemon.launchd import generate_plist, LABEL
+from vllmlx.daemon.launchd import generate_plist, LABEL
 
 def test_generate_plist_has_required_keys():
     plist = generate_plist()
@@ -386,7 +386,7 @@ def test_generate_plist_uses_current_python():
     assert sys.executable in plist["ProgramArguments"]
 
 def test_plist_path_is_in_launch_agents():
-    from vmlx.daemon.launchd import get_plist_path
+    from vllmlx.daemon.launchd import get_plist_path
     
     path = get_plist_path()
     assert "LaunchAgents" in str(path)
@@ -420,19 +420,19 @@ def test_daemon_survives_signal():
 5. Test plist generation (unit tests - fast)
 6. Test manually:
    ```bash
-   vmlx daemon start
-   vmlx daemon status
-   launchctl list | grep vmlx  # Verify loaded
+   vllmlx daemon start
+   vllmlx daemon status
+   launchctl list | grep vllmlx  # Verify loaded
    curl localhost:11434/health
-   vmlx daemon logs
-   vmlx daemon stop
+   vllmlx daemon logs
+   vllmlx daemon stop
    ```
 7. Test auto-restart:
    ```bash
-   vmlx daemon start
-   kill -9 $(pgrep -f "vmlx.daemon")
+   vllmlx daemon start
+   kill -9 $(pgrep -f "vllmlx.daemon")
    sleep 5
-   vmlx daemon status  # Should show running again
+   vllmlx daemon status  # Should show running again
    ```
 8. Run `ruff check` and `pytest`
 9. Commit with `wt commit`

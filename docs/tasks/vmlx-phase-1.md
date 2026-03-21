@@ -1,9 +1,9 @@
 # Task: Core Infrastructure
 
 **Phase**: 1  
-**Branch**: `feat/vmlx-phase-1`  
-**Plan**: [docs/plans/vmlx.md](../plans/vmlx.md)  
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
+**Branch**: `feat/vllmlx-phase-1`  
+**Plan**: [docs/plans/vllmlx.md](../plans/vllmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
 **Status**: pending
 
 ---
@@ -17,14 +17,14 @@ Set up project foundation with config system, model alias registry, and basic CL
 ## Acceptance Criteria
 
 - [ ] Project installable via `pip install -e .`
-- [ ] `vmlx --help` shows available commands
-- [ ] `vmlx pull qwen2-vl-2b` downloads model from HuggingFace
-- [ ] `vmlx pull mlx-community/Some-Model` works with full HF paths
-- [ ] `vmlx ls` lists downloaded models with name and size
-- [ ] `vmlx rm qwen2-vl-2b` removes model from HF cache
-- [ ] `vmlx config` displays current configuration
-- [ ] `vmlx config set daemon.idle_timeout 120` updates config
-- [ ] Config persists to `~/.vmlx/config.toml`
+- [ ] `vllmlx --help` shows available commands
+- [ ] `vllmlx pull qwen2-vl-2b` downloads model from HuggingFace
+- [ ] `vllmlx pull mlx-community/Some-Model` works with full HF paths
+- [ ] `vllmlx ls` lists downloaded models with name and size
+- [ ] `vllmlx rm qwen2-vl-2b` removes model from HF cache
+- [ ] `vllmlx config` displays current configuration
+- [ ] `vllmlx config set daemon.idle_timeout 120` updates config
+- [ ] Config persists to `~/.vllmlx/config.toml`
 - [ ] Builtin aliases resolve correctly
 - [ ] Custom aliases from config override builtins
 - [ ] All unit tests pass
@@ -37,19 +37,19 @@ Set up project foundation with config system, model alias registry, and basic CL
 | File | Description |
 |------|-------------|
 | `pyproject.toml` | Package config with dependencies: click, pydantic, toml, huggingface_hub, rich |
-| `src/vmlx/__init__.py` | Package init with version |
-| `src/vmlx/__main__.py` | Entry point for `python -m vmlx` |
-| `src/vmlx/config/__init__.py` | Config module init |
-| `src/vmlx/config/config.py` | Config dataclass, load/save, defaults |
-| `src/vmlx/models/__init__.py` | Models module init |
-| `src/vmlx/models/aliases.py` | BUILTIN_ALIASES dict, resolve function |
-| `src/vmlx/models/registry.py` | HF cache scanning, model info extraction |
-| `src/vmlx/cli/__init__.py` | CLI module init |
-| `src/vmlx/cli/main.py` | Click group, command registration |
-| `src/vmlx/cli/pull.py` | `vmlx pull` command |
-| `src/vmlx/cli/ls.py` | `vmlx ls` command |
-| `src/vmlx/cli/rm.py` | `vmlx rm` command |
-| `src/vmlx/cli/config_cmd.py` | `vmlx config` command |
+| `src/vllmlx/__init__.py` | Package init with version |
+| `src/vllmlx/__main__.py` | Entry point for `python -m vllmlx` |
+| `src/vllmlx/config/__init__.py` | Config module init |
+| `src/vllmlx/config/config.py` | Config dataclass, load/save, defaults |
+| `src/vllmlx/models/__init__.py` | Models module init |
+| `src/vllmlx/models/aliases.py` | BUILTIN_ALIASES dict, resolve function |
+| `src/vllmlx/models/registry.py` | HF cache scanning, model info extraction |
+| `src/vllmlx/cli/__init__.py` | CLI module init |
+| `src/vllmlx/cli/main.py` | Click group, command registration |
+| `src/vllmlx/cli/pull.py` | `vllmlx pull` command |
+| `src/vllmlx/cli/ls.py` | `vllmlx ls` command |
+| `src/vllmlx/cli/rm.py` | `vllmlx rm` command |
+| `src/vllmlx/cli/config_cmd.py` | `vllmlx config` command |
 | `tests/__init__.py` | Tests package |
 | `tests/unit/__init__.py` | Unit tests package |
 | `tests/unit/test_config.py` | Config load/save tests |
@@ -63,12 +63,12 @@ Set up project foundation with config system, model alias registry, and basic CL
 ### Project Structure
 
 ```
-vmlx/
+vllmlx/
 ├── pyproject.toml
 ├── src/
-│   └── vmlx/
+│   └── vllmlx/
 │       ├── __init__.py          # __version__ = "0.1.0"
-│       ├── __main__.py          # from vmlx.cli.main import cli; cli()
+│       ├── __main__.py          # from vllmlx.cli.main import cli; cli()
 │       ├── config/
 │       │   ├── __init__.py
 │       │   └── config.py
@@ -90,7 +90,7 @@ vmlx/
 
 ```toml
 [project]
-name = "vmlx"
+name = "vllmlx"
 version = "0.1.0"
 description = "Ollama-style CLI for MLX-VLM"
 requires-python = ">=3.12"
@@ -106,14 +106,14 @@ dependencies = [
 dev = ["pytest", "pytest-asyncio", "ruff"]
 
 [project.scripts]
-vmlx = "vmlx.cli.main:cli"
+vllmlx = "vllmlx.cli.main:cli"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/vmlx"]
+packages = ["src/vllmlx"]
 ```
 
 ### Config Schema (config.py)
@@ -139,7 +139,7 @@ class Config(BaseModel):
 
     @classmethod
     def path(cls) -> Path:
-        return Path.home() / ".vmlx" / "config.toml"
+        return Path.home() / ".vllmlx" / "config.toml"
 
     @classmethod
     def load(cls) -> "Config":
@@ -231,9 +231,9 @@ def delete_model(hf_path: str) -> bool:
 ### CLI Commands
 
 Use `rich` for pretty output:
-- `vmlx ls`: Table with model name, size (human readable), last used
-- `vmlx pull`: Progress bar during download
-- `vmlx rm`: Confirmation prompt, success message
+- `vllmlx ls`: Table with model name, size (human readable), last used
+- `vllmlx pull`: Progress bar during download
+- `vllmlx rm`: Confirmation prompt, success message
 
 ---
 
@@ -262,7 +262,7 @@ Use `rich` for pretty output:
 
 ## Agent Instructions
 
-1. Read the full spec at `docs/specs/vmlx-spec.md` for context
+1. Read the full spec at `docs/specs/vllmlx-spec.md` for context
 2. Create project structure first (`pyproject.toml`, directories)
 3. Implement config module with tests
 4. Implement aliases module with tests
@@ -270,5 +270,5 @@ Use `rich` for pretty output:
 6. Implement CLI commands
 7. Run `ruff check` and fix any lint issues
 8. Run `pytest` and ensure all tests pass
-9. Test manually: `pip install -e . && vmlx --help`
+9. Test manually: `pip install -e . && vllmlx --help`
 10. Commit with descriptive messages using `wt commit`

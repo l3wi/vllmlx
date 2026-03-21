@@ -1,296 +1,305 @@
-"""Integration tests for vmlx API endpoints."""
+"""Integration tests for vllmlx daemon API surface."""
 
-import sys
-from unittest.mock import MagicMock, patch
+from __future__ import annotations
+
+from typing import Any
+from unittest.mock import patch
+
+import pytest
+from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.testclient import TestClient
+
+from vllmlx.config import Config
+from vllmlx.daemon.server import create_app
+from vllmlx.daemon.state import get_state
 
 
-class TestHealthEndpoint:
-    """Tests for /health endpoint."""
+class _FakeSupervisor:
+    def __init__(self):
+        self.running = False
+        self.active_model: str | None = None
+        self.ensure_calls: list[str] = []
+        self.backend_url = "http://127.0.0.1:12345"
 
+    def is_running(self) -> bool:
+        return self.running
+
+    async def is_healthy(self) -> bool:
+        return self.running
+
+    async def ensure_model(self, model: str) -> None:
+        self.ensure_calls.append(model)
+        self.active_model = model
+        self.running = True
+
+
+class TestDaemonSurface:
     def test_health_returns_ok(self):
-        """Test health endpoint returns status ok."""
-        from fastapi.testclient import TestClient
-
-        from vmlx.daemon.server import create_app
-
         app = create_app()
         with TestClient(app) as client:
             response = client.get("/health")
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
 
-            assert response.status_code == 200
-            assert response.json() == {"status": "ok"}
-
-
-class TestListModelsEndpoint:
-    """Tests for /v1/models endpoint."""
-
-    def test_list_models_returns_list(self):
-        """Test list models endpoint returns model list."""
-        from datetime import datetime
-        from unittest.mock import MagicMock
-
-        from fastapi.testclient import TestClient
-
-        from vmlx.daemon.server import create_app
-
-        # Mock the list_models function
-        mock_model = MagicMock()
-        mock_model.name = "test-model"
-        mock_model.hf_path = "test-org/test-model"
-        mock_model.last_modified = datetime(2024, 1, 1)
-
-        with patch("vmlx.models.registry.list_models", return_value=[mock_model]):
-            app = create_app()
-            with TestClient(app) as client:
-                response = client.get("/v1/models")
-
-                assert response.status_code == 200
-                data = response.json()
-                assert data["object"] == "list"
-                assert len(data["data"]) == 1
-                assert data["data"][0]["id"] == "test-model"
-                assert data["data"][0]["owned_by"] == "test-org"
-
-    def test_list_models_empty(self):
-        """Test list models returns empty list when no models."""
-        from fastapi.testclient import TestClient
-
-        from vmlx.daemon.server import create_app
-
-        with patch("vmlx.daemon.routes.list_models", return_value=[]):
-            app = create_app()
-            with TestClient(app) as client:
-                response = client.get("/v1/models")
-
-                assert response.status_code == 200
-                data = response.json()
-                assert data["object"] == "list"
-                assert data["data"] == []
-
-
-class TestStatusEndpoint:
-    """Tests for /status endpoint."""
-
-    def test_status_returns_daemon_info(self):
-        """Test status endpoint returns daemon information."""
-        from fastapi.testclient import TestClient
-
-        from vmlx.daemon.server import create_app
-
+    def test_legacy_status_endpoint_is_removed(self):
         app = create_app()
         with TestClient(app) as client:
             response = client.get("/status")
+        assert response.status_code == 404
 
-            assert response.status_code == 200
-            data = response.json()
-            assert data["running"] is True
-            assert "pid" in data
-            assert "uptime_seconds" in data
-            assert "loaded_model" in data
-            assert "idle_timeout" in data
-
-
-class TestChatCompletionsEndpoint:
-    """Tests for /v1/chat/completions endpoint."""
-
-    def _mock_mlx_modules(self):
-        """Set up mock MLX modules."""
-        mock_mlx_vlm = MagicMock()
-        mock_mlx_vlm.load = MagicMock(return_value=(MagicMock(), MagicMock()))
-        mock_mlx_vlm.generate = MagicMock(return_value="Hello, world!")
-        mock_mlx_vlm.stream_generate = MagicMock(return_value=iter(["Hello", ", ", "world!"]))
-        mock_mlx_vlm_utils = MagicMock()
-        mock_mlx_vlm_utils.load_config = MagicMock(return_value=MagicMock())
-        mock_prompt_utils = MagicMock()
-        mock_prompt_utils.apply_chat_template = MagicMock(return_value="formatted prompt")
-        mock_mlx_core = MagicMock()
-
-        return {
-            "mlx": MagicMock(),
-            "mlx.core": mock_mlx_core,
-            "mlx_vlm": mock_mlx_vlm,
-            "mlx_vlm.utils": mock_mlx_vlm_utils,
-            "mlx_vlm.prompt_utils": mock_prompt_utils,
+    def test_v1_status_returns_not_loaded_when_backend_not_running(self):
+        app = create_app()
+        with TestClient(app) as client:
+            response = client.get("/v1/status")
+        assert response.status_code == 200
+        assert response.json() == {
+            "status": "not_loaded",
+            "model": None,
+            "requests": [],
         }
 
-    def test_chat_completion_text_only(self):
-        """Test chat completion with text-only message."""
-        from fastapi.testclient import TestClient
+    def test_v1_models_returns_empty_when_backend_not_running(self):
+        app = create_app()
+        with TestClient(app) as client:
+            response = client.get("/v1/models")
+        assert response.status_code == 200
+        assert response.json() == {"object": "list", "data": []}
 
-        mock_modules = self._mock_mlx_modules()
+    def test_v1_models_returns_empty_when_backend_unhealthy(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            supervisor.running = True
 
-        with patch.dict(sys.modules, mock_modules):
-            from vmlx.daemon.server import create_app
+            async def unhealthy() -> bool:
+                return False
 
-            app = create_app()
-            with TestClient(app) as client:
+            supervisor.is_healthy = unhealthy
+            state.supervisor = supervisor
+
+            response = client.get("/v1/models")
+
+        assert response.status_code == 200
+        assert response.json() == {"object": "list", "data": []}
+
+
+class TestProxyRouting:
+    def test_chat_request_auto_loads_model_and_proxies(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.supervisor = supervisor
+
+            observed: dict[str, Any] = {}
+
+            async def fake_proxy(request, backend_path, raw_body, payload):
+                observed["backend_path"] = backend_path
+                observed["payload"] = payload
+                observed["raw_body"] = raw_body
+                return JSONResponse({"ok": True})
+
+            cfg = Config(aliases={"vision": "mlx-community/Qwen3-VL-4B-Instruct-3bit"})
+
+            with (
+                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
+                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
+            ):
                 response = client.post(
                     "/v1/chat/completions",
                     json={
-                        "model": "test-model",
-                        "messages": [{"role": "user", "content": "Hello"}],
+                        "model": "vision",
+                        "messages": [{"role": "user", "content": "hello"}],
                         "stream": False,
                     },
                 )
 
-                assert response.status_code == 200
-                data = response.json()
-                assert "id" in data
-                assert data["object"] == "chat.completion"
-                assert data["model"] == "test-model"
-                assert len(data["choices"]) == 1
-                assert data["choices"][0]["message"]["role"] == "assistant"
-                assert data["choices"][0]["finish_reason"] == "stop"
+            assert response.status_code == 200
+            assert response.json() == {"ok": True}
+            assert supervisor.ensure_calls == ["mlx-community/Qwen3-VL-4B-Instruct-3bit"]
+            assert observed["backend_path"] == "/v1/chat/completions"
+            assert observed["payload"]["model"] == "mlx-community/Qwen3-VL-4B-Instruct-3bit"
 
-    def test_chat_completion_with_image(self):
-        """Test chat completion with image input."""
-        from fastapi.testclient import TestClient
+    def test_embeddings_request_auto_loads_model_and_proxies(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.supervisor = supervisor
 
-        mock_modules = self._mock_mlx_modules()
+            observed: dict[str, Any] = {}
 
-        with patch.dict(sys.modules, mock_modules):
-            from vmlx.daemon.server import create_app
+            async def fake_proxy(request, backend_path, raw_body, payload):
+                observed["backend_path"] = backend_path
+                observed["payload"] = payload
+                return JSONResponse({"ok": True})
 
-            app = create_app()
-            with TestClient(app) as client:
+            cfg = Config(aliases={})
+
+            with (
+                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
+                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
+            ):
                 response = client.post(
-                    "/v1/chat/completions",
+                    "/v1/embeddings",
                     json={
-                        "model": "test-model",
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": "What is in this image?"},
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {"url": "data:image/jpeg;base64,/9j/4AAQ..."},
-                                    },
-                                ],
-                            }
-                        ],
-                        "stream": False,
+                        "model": "qwen3-embedding:4b",
+                        "input": "hello",
                     },
                 )
 
-                assert response.status_code == 200
-                data = response.json()
-                assert data["object"] == "chat.completion"
+            assert response.status_code == 200
+            assert response.json() == {"ok": True}
+            assert supervisor.ensure_calls == ["mlx-community/Qwen3-Embedding-4B-4bit-DWQ"]
+            assert observed["backend_path"] == "/v1/embeddings"
+            assert observed["payload"]["model"] == "mlx-community/Qwen3-Embedding-4B-4bit-DWQ"
 
-    def test_chat_completion_streaming(self):
-        """Test chat completion with streaming."""
-        from fastapi.testclient import TestClient
+    def test_embeddings_request_uses_backend_default_when_model_omitted(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.supervisor = supervisor
 
-        mock_modules = self._mock_mlx_modules()
+            observed: dict[str, Any] = {}
 
-        with patch.dict(sys.modules, mock_modules):
-            from vmlx.daemon.server import create_app
+            async def fake_proxy(request, backend_path, raw_body, payload):
+                observed["backend_path"] = backend_path
+                observed["payload"] = payload
+                return JSONResponse({"ok": True})
 
-            app = create_app()
-            with TestClient(app) as client:
+            cfg = Config(
+                aliases={},
+                backend={
+                    "embedding_model": "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
+                },
+            )
+
+            with (
+                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
+                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
+            ):
+                response = client.post(
+                    "/v1/embeddings",
+                    json={
+                        "input": "hello",
+                    },
+                )
+
+            assert response.status_code == 200
+            assert response.json() == {"ok": True}
+            assert supervisor.ensure_calls == ["mlx-community/Qwen3-Embedding-4B-4bit-DWQ"]
+            assert observed["backend_path"] == "/v1/embeddings"
+            assert observed["payload"]["model"] == "mlx-community/Qwen3-Embedding-4B-4bit-DWQ"
+
+    def test_request_without_model_returns_503_when_unloaded(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            state.supervisor = _FakeSupervisor()
+
+            response = client.post(
+                "/v1/chat/completions",
+                json={"messages": [{"role": "user", "content": "hello"}]},
+            )
+
+            assert response.status_code == 503
+
+    def test_streaming_proxy_response_passthrough(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.supervisor = supervisor
+
+            async def fake_proxy(request, backend_path, raw_body, payload):
+                async def event_stream():
+                    yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\\n\\n"
+                    yield b"data: [DONE]\\n\\n"
+
+                return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+            with patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy):
                 response = client.post(
                     "/v1/chat/completions",
                     json={
-                        "model": "test-model",
-                        "messages": [{"role": "user", "content": "Hello"}],
+                        "model": "mlx-community/Qwen3-VL-4B-Instruct-3bit",
+                        "messages": [{"role": "user", "content": "hello"}],
                         "stream": True,
                     },
                 )
 
-                assert response.status_code == 200
-                assert response.headers["content-type"] == "text/event-stream; charset=utf-8"
+            assert response.status_code == 200
+            assert "data:" in response.text
+            assert "[DONE]" in response.text
 
-                # Read streamed content
-                content = response.text
-                assert "data:" in content
-                assert "[DONE]" in content
-
-
-class TestInternalUnloadEndpoint:
-    """Tests for /_internal/unload endpoint."""
-
-    def test_unload_when_no_model_loaded(self):
-        """Test unload returns success when no model loaded."""
-        from fastapi.testclient import TestClient
-
-        from vmlx.daemon.server import create_app
-
+    def test_streaming_proxy_keeps_upstream_open_until_stream_end(self):
         app = create_app()
         with TestClient(app) as client:
-            response = client.post("/_internal/unload")
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.supervisor = supervisor
+            created_clients: list[FakeAsyncClient] = []
+
+            class FakeIncomingResponse:
+                def __init__(self, owner: FakeAsyncClient):
+                    self.owner = owner
+                    self.status_code = 200
+                    self.headers = {"content-type": "text/event-stream"}
+                    self.closed = False
+
+                async def aiter_bytes(self):
+                    if self.owner.closed:
+                        raise RuntimeError("client closed before stream consumption")
+                    yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\\n\\n"
+                    if self.owner.closed:
+                        raise RuntimeError("client closed during stream consumption")
+                    yield b"data: [DONE]\\n\\n"
+
+                async def aclose(self):
+                    self.closed = True
+
+            class FakeAsyncClient:
+                def __init__(self, *args, **kwargs):
+                    self.closed = False
+                    self.incoming = FakeIncomingResponse(self)
+                    created_clients.append(self)
+
+                def build_request(self, *args, **kwargs):
+                    return object()
+
+                async def send(self, request, stream: bool = False):
+                    assert stream is True
+                    return self.incoming
+
+                async def aclose(self):
+                    self.closed = True
+
+            with patch("vllmlx.daemon.routes.httpx.AsyncClient", FakeAsyncClient):
+                response = client.post(
+                    "/v1/chat/completions",
+                    json={
+                        "model": "mlx-community/Qwen3-4B-4bit",
+                        "messages": [{"role": "user", "content": "hello"}],
+                        "stream": True,
+                    },
+                )
 
             assert response.status_code == 200
-            data = response.json()
-            assert data["success"] is True
-            assert data["unloaded_model"] is None
+            assert "data:" in response.text
+            assert "[DONE]" in response.text
+            assert len(created_clients) == 1
+            assert created_clients[0].incoming.closed is True
+            assert created_clients[0].closed is True
 
 
-class TestExtractContent:
-    """Tests for extract_content helper function."""
+class TestHardCutCompatibility:
+    def test_no_legacy_script_entry_in_pyproject(self):
+        pyproject = open("pyproject.toml", "r", encoding="utf-8").read()
+        assert "vllmlx = \"vllmlx.cli.main:cli\"" in pyproject
+        assert "\nvmlx = \"" not in pyproject
 
-    def test_extract_simple_text(self):
-        """Test extracting simple text content."""
-        from vmlx.daemon.routes import Message, extract_content
-
-        messages = [Message(role="user", content="Hello, world!")]
-        prompt, images = extract_content(messages)
-
-        assert "Hello, world!" in prompt
-        assert images == []
-
-    def test_extract_multipart_content(self):
-        """Test extracting multipart content with images."""
-        from vmlx.daemon.routes import Message, extract_content
-
-        messages = [
-            Message(
-                role="user",
-                content=[
-                    {"type": "text", "text": "What is this?"},
-                    {"type": "image_url", "image_url": {"url": "http://example.com/image.jpg"}},
-                ],
-            )
-        ]
-        prompt, images = extract_content(messages)
-
-        assert "What is this?" in prompt
-        assert len(images) == 1
-        assert images[0] == "http://example.com/image.jpg"
-
-    def test_extract_base64_image(self):
-        """Test extracting base64 encoded image."""
-        from vmlx.daemon.routes import Message, extract_content
-
-        base64_url = "data:image/jpeg;base64,/9j/4AAQSkZJRg..."
-        messages = [
-            Message(
-                role="user",
-                content=[
-                    {"type": "text", "text": "Describe this"},
-                    {"type": "image_url", "image_url": {"url": base64_url}},
-                ],
-            )
-        ]
-        prompt, images = extract_content(messages)
-
-        assert "Describe this" in prompt
-        assert len(images) == 1
-        assert images[0] == base64_url
-
-    def test_extract_multiple_messages(self):
-        """Test extracting from multiple messages."""
-        from vmlx.daemon.routes import Message, extract_content
-
-        messages = [
-            Message(role="system", content="You are helpful."),
-            Message(role="user", content="Hello"),
-            Message(role="assistant", content="Hi there!"),
-            Message(role="user", content="How are you?"),
-        ]
-        prompt, images = extract_content(messages)
-
-        assert "You are helpful" in prompt
-        assert "Hello" in prompt
-        assert "Hi there!" in prompt
-        assert "How are you?" in prompt
-        assert images == []
+    def test_old_module_import_fails(self):
+        with pytest.raises(ModuleNotFoundError):
+            __import__("vmlx")

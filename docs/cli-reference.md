@@ -1,24 +1,24 @@
 # CLI Reference
 
-Complete reference for all vmlx commands.
+Complete reference for all vllmlx commands.
 
 ## Global Options
 
 ```bash
-vmlx --version  # Show version
-vmlx --help     # Show help
+vllmlx --version  # Show version
+vllmlx --help     # Show help
 ```
 
 ---
 
 ## Model Management
 
-### vmlx pull
+### vllmlx pull
 
 Download a model from HuggingFace.
 
 ```bash
-vmlx pull <model>
+vllmlx pull <model>
 ```
 
 **Arguments:**
@@ -27,20 +27,20 @@ vmlx pull <model>
 **Examples:**
 ```bash
 # Pull using alias
-vmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b
 
 # Pull using full HuggingFace path
-vmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
+vllmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
 ```
 
 ---
 
-### vmlx ls
+### vllmlx ls
 
 List downloaded MLX models.
 
 ```bash
-vmlx ls
+vllmlx ls
 ```
 
 Shows all MLX-VLM compatible models in the HuggingFace cache with their sizes and modification dates.
@@ -60,12 +60,12 @@ Shows all MLX-VLM compatible models in the HuggingFace cache with their sizes an
 
 ---
 
-### vmlx rm
+### vllmlx rm
 
 Remove a model from the HuggingFace cache.
 
 ```bash
-vmlx rm <model> [--force]
+vllmlx rm <model> [--force]
 ```
 
 **Arguments:**
@@ -77,37 +77,37 @@ vmlx rm <model> [--force]
 **Examples:**
 ```bash
 # Remove with confirmation
-vmlx rm qwen2-vl-2b
+vllmlx rm qwen2-vl-2b
 
 # Remove without confirmation
-vmlx rm qwen2-vl-2b --force
+vllmlx rm qwen2-vl-2b --force
 ```
 
 ---
 
 ## Interactive Chat
 
-### vmlx run
+### vllmlx run
 
 Start an interactive chat session.
 
 ```bash
-vmlx run [model]
+vllmlx run [model]
 ```
 
 **Arguments:**
 - `[model]` - Model alias or path (optional if default configured)
 
 **Requirements:**
-- Daemon must be running (`vmlx daemon start`)
+- Daemon must be running (`vllmlx daemon start`)
 
 **Examples:**
 ```bash
 # Start chat with specific model
-vmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b
 
 # Start chat with default model (if configured)
-vmlx run
+vllmlx run
 ```
 
 **Interactive commands:**
@@ -119,12 +119,12 @@ vmlx run
 
 ## Server
 
-### vmlx serve
+### vllmlx serve
 
-Start the vmlx API server in foreground (for development).
+Start the vllmlx API server in foreground (for development).
 
 ```bash
-vmlx serve [options]
+vllmlx serve [options]
 ```
 
 **Options:**
@@ -135,71 +135,71 @@ vmlx serve [options]
 **Examples:**
 ```bash
 # Start with defaults (localhost:11434)
-vmlx serve
+vllmlx serve
 
 # Start on custom port
-vmlx serve --port 8080
+vllmlx serve --port 8080
 
 # Allow external connections (use with caution)
-vmlx serve --host 0.0.0.0
+vllmlx serve --host 0.0.0.0
 
 # Debug logging
-vmlx serve --log-level debug
+vllmlx serve --log-level debug
 ```
 
 ---
 
 ## Daemon Management
 
-### vmlx daemon start
+### vllmlx daemon start
 
-Start the vmlx daemon.
+Start the vllmlx daemon.
 
 ```bash
-vmlx daemon start
+vllmlx daemon start
 ```
 
 Installs the launchd plist if not present and loads the daemon. The daemon will auto-start on future logins.
 
 ---
 
-### vmlx daemon stop
+### vllmlx daemon stop
 
-Stop the vmlx daemon.
+Stop the vllmlx daemon.
 
 ```bash
-vmlx daemon stop
+vllmlx daemon stop
 ```
 
 Unloads the daemon from launchd. The daemon will still auto-start on next login unless you remove the plist.
 
 ---
 
-### vmlx daemon restart
+### vllmlx daemon restart
 
-Restart the vmlx daemon.
+Restart the vllmlx daemon.
 
 ```bash
-vmlx daemon restart
+vllmlx daemon restart
 ```
 
 Stops the daemon if running, then starts it again. Useful after configuration changes.
 
 ---
 
-### vmlx daemon status
+### vllmlx daemon status
 
 Show daemon status.
 
 ```bash
-vmlx daemon status
+vllmlx daemon status
 ```
 
 Displays whether the daemon is running, its PID, and information about loaded models and resource usage.
 
 **Example output:**
 ```
-        vmlx Daemon Status        
+        vllmlx Daemon Status        
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
 ┃ Property     ┃ Value            ┃
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
@@ -215,12 +215,12 @@ Displays whether the daemon is running, its PID, and information about loaded mo
 
 ---
 
-### vmlx daemon logs
+### vllmlx daemon logs
 
 View daemon logs.
 
 ```bash
-vmlx daemon logs [options]
+vllmlx daemon logs [options]
 ```
 
 **Options:**
@@ -230,37 +230,37 @@ vmlx daemon logs [options]
 **Examples:**
 ```bash
 # Show last 50 lines
-vmlx daemon logs
+vllmlx daemon logs
 
 # Show last 100 lines
-vmlx daemon logs -n 100
+vllmlx daemon logs -n 100
 
 # Follow log output (Ctrl+C to stop)
-vmlx daemon logs -f
+vllmlx daemon logs -f
 ```
 
 ---
 
 ## Configuration
 
-### vmlx config
+### vllmlx config
 
 View current configuration.
 
 ```bash
-vmlx config
+vllmlx config
 ```
 
-Displays the current configuration from `~/.vmlx/config.toml`.
+Displays the current configuration from `~/.vllmlx/config.toml`.
 
 ---
 
-### vmlx config set
+### vllmlx config set
 
 Set a configuration value.
 
 ```bash
-vmlx config set <key> <value>
+vllmlx config set <key> <value>
 ```
 
 **Arguments:**
@@ -274,53 +274,53 @@ vmlx config set <key> <value>
 | `daemon.host` | string | API server host |
 | `daemon.idle_timeout` | int | Seconds before model unload |
 | `daemon.log_level` | string | Logging level |
-| `models.default` | string | Default model for `vmlx run` |
+| `models.default` | string | Default model for `vllmlx run` |
 | `aliases.<name>` | string | Custom model alias |
 
 **Examples:**
 ```bash
 # Set idle timeout to 2 minutes
-vmlx config set daemon.idle_timeout 120
+vllmlx config set daemon.idle_timeout 120
 
 # Set default model
-vmlx config set models.default qwen2-vl-7b
+vllmlx config set models.default qwen2-vl-7b
 
 # Add custom alias
-vmlx config set aliases.my-model some-org/some-model-4bit
+vllmlx config set aliases.my-model some-org/some-model-4bit
 ```
 
 ---
 
-### vmlx config get
+### vllmlx config get
 
 Get a configuration value.
 
 ```bash
-vmlx config get <key>
+vllmlx config get <key>
 ```
 
 **Examples:**
 ```bash
-vmlx config get daemon.port
+vllmlx config get daemon.port
 # daemon.port = 11434
 
-vmlx config get models.default
+vllmlx config get models.default
 # models.default = qwen2-vl-7b
 ```
 
 ---
 
-### vmlx config path
+### vllmlx config path
 
 Show the config file path.
 
 ```bash
-vmlx config path
+vllmlx config path
 ```
 
 **Output:**
 ```
-/Users/yourusername/.vmlx/config.toml
+/Users/yourusername/.vllmlx/config.toml
 ```
 
 ---

@@ -1,7 +1,7 @@
-# vmlx Implementation Plan
+# vllmlx Implementation Plan
 
-**Spec**: [docs/specs/vmlx-spec.md](../specs/vmlx-spec.md)  
-**PRD**: [docs/prds/vmlx.md](../prds/vmlx.md)  
+**Spec**: [docs/specs/vllmlx-spec.md](../specs/vllmlx-spec.md)  
+**PRD**: [docs/prds/vllmlx.md](../prds/vllmlx.md)  
 **Created**: 2026-01-30  
 **Status**: pending
 
@@ -9,96 +9,96 @@
 
 ## Orchestration
 
-**Feature Branch**: `feat/vmlx`  
+**Feature Branch**: `feat/vllmlx`  
 **Base Branch**: `main`
 
 All phase branches will be created from the feature branch (not main):
-- Phase branches merge back to `feat/vmlx`
-- Single PR from `feat/vmlx` to `main` when all phases complete
+- Phase branches merge back to `feat/vllmlx`
+- Single PR from `feat/vllmlx` to `main` when all phases complete
 
 ---
 
 ## Phases
 
 ### Phase 1: Core Infrastructure
-- **Branch**: `feat/vmlx-phase-1`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-1`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: none
-- **Tasks**: [docs/tasks/vmlx-phase-1.md](../tasks/vmlx-phase-1.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-1.md](../tasks/vllmlx-phase-1.md)
 - **Files**:
   - `pyproject.toml`
-  - `src/vmlx/__init__.py`
-  - `src/vmlx/__main__.py`
-  - `src/vmlx/config/config.py`
-  - `src/vmlx/models/aliases.py`
-  - `src/vmlx/models/registry.py`
-  - `src/vmlx/cli/main.py`
-  - `src/vmlx/cli/pull.py`
-  - `src/vmlx/cli/ls.py`
-  - `src/vmlx/cli/rm.py`
-  - `src/vmlx/cli/config_cmd.py`
+  - `src/vllmlx/__init__.py`
+  - `src/vllmlx/__main__.py`
+  - `src/vllmlx/config/config.py`
+  - `src/vllmlx/models/aliases.py`
+  - `src/vllmlx/models/registry.py`
+  - `src/vllmlx/cli/main.py`
+  - `src/vllmlx/cli/pull.py`
+  - `src/vllmlx/cli/ls.py`
+  - `src/vllmlx/cli/rm.py`
+  - `src/vllmlx/cli/config_cmd.py`
   - `tests/unit/test_config.py`
   - `tests/unit/test_aliases.py`
 
 ### Phase 2: Daemon & API Server
-- **Branch**: `feat/vmlx-phase-2`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-2`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: Phase 1
-- **Tasks**: [docs/tasks/vmlx-phase-2.md](../tasks/vmlx-phase-2.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-2.md](../tasks/vllmlx-phase-2.md)
 - **Files**:
-  - `src/vmlx/daemon/server.py`
-  - `src/vmlx/daemon/routes.py`
-  - `src/vmlx/daemon/state.py`
-  - `src/vmlx/models/manager.py`
-  - `src/vmlx/cli/serve.py`
+  - `src/vllmlx/daemon/server.py`
+  - `src/vllmlx/daemon/routes.py`
+  - `src/vllmlx/daemon/state.py`
+  - `src/vllmlx/models/manager.py`
+  - `src/vllmlx/cli/serve.py`
   - `tests/integration/test_api.py`
 
 ### Phase 3: Idle Management
-- **Branch**: `feat/vmlx-phase-3`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-3`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: Phase 2
 - **Parallel With**: Phase 4, Phase 5
-- **Tasks**: [docs/tasks/vmlx-phase-3.md](../tasks/vmlx-phase-3.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-3.md](../tasks/vllmlx-phase-3.md)
 - **Files**:
-  - `src/vmlx/daemon/idle.py`
-  - `src/vmlx/daemon/state.py` (modify - add idle tracking)
+  - `src/vllmlx/daemon/idle.py`
+  - `src/vllmlx/daemon/state.py` (modify - add idle tracking)
   - `tests/unit/test_idle.py`
   - `tests/integration/test_idle_timeout.py`
 
 ### Phase 4: launchd Integration
-- **Branch**: `feat/vmlx-phase-4`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-4`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: Phase 2
 - **Parallel With**: Phase 3, Phase 5
-- **Tasks**: [docs/tasks/vmlx-phase-4.md](../tasks/vmlx-phase-4.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-4.md](../tasks/vllmlx-phase-4.md)
 - **Files**:
-  - `src/vmlx/daemon/launchd.py`
-  - `src/vmlx/cli/daemon_cmd.py`
+  - `src/vllmlx/daemon/launchd.py`
+  - `src/vllmlx/cli/daemon_cmd.py`
   - `tests/unit/test_launchd.py`
   - `tests/integration/test_daemon_lifecycle.py`
 
 ### Phase 5: Interactive Chat
-- **Branch**: `feat/vmlx-phase-5`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-5`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: Phase 2
 - **Parallel With**: Phase 3, Phase 4
-- **Tasks**: [docs/tasks/vmlx-phase-5.md](../tasks/vmlx-phase-5.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-5.md](../tasks/vllmlx-phase-5.md)
 - **Files**:
-  - `src/vmlx/cli/run.py`
-  - `src/vmlx/chat/repl.py`
+  - `src/vllmlx/cli/run.py`
+  - `src/vllmlx/chat/repl.py`
   - `tests/unit/test_repl.py`
 
 ### Phase 6: Documentation & Release
-- **Branch**: `feat/vmlx-phase-6`
-- **Base**: `feat/vmlx`
+- **Branch**: `feat/vllmlx-phase-6`
+- **Base**: `feat/vllmlx`
 - **Status**: pending
 - **Depends On**: Phase 3, Phase 4, Phase 5
-- **Tasks**: [docs/tasks/vmlx-phase-6.md](../tasks/vmlx-phase-6.md)
+- **Tasks**: [docs/tasks/vllmlx-phase-6.md](../tasks/vllmlx-phase-6.md)
 - **Files**:
   - `README.md`
   - `docs/installation.md`
@@ -141,7 +141,7 @@ All phase branches will be created from the feature branch (not main):
 - **Agent**: worker
 - **Max Parallel**: 3 (for Batch 3)
 - **Timeout**: 45 minutes per phase
-- **Feature Branch**: `feat/vmlx`
+- **Feature Branch**: `feat/vllmlx`
 
 ---
 
@@ -160,7 +160,7 @@ All phase branches will be created from the feature branch (not main):
 
 ## Merge Strategy
 
-1. Each phase branch merges to `feat/vmlx` via squash merge
+1. Each phase branch merges to `feat/vllmlx` via squash merge
 2. Parallel phases (3, 4, 5) merge in any order as they complete
-3. After Phase 6 completes, create PR from `feat/vmlx` → `main`
+3. After Phase 6 completes, create PR from `feat/vllmlx` → `main`
 4. Final PR includes all squashed phase commits

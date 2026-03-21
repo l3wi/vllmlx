@@ -1,1 +1,1 @@
-"""Unit tests for vmlx."""
+"""Unit tests for vllmlx."""

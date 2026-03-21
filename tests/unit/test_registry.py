@@ -3,7 +3,7 @@
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from vmlx.models.registry import ModelInfo, delete_model, format_size, list_models
+from vllmlx.models.registry import ModelInfo, delete_model, format_size, list_models
 
 
 class TestModelInfo:
@@ -70,7 +70,7 @@ class TestListModels:
         mock_cache = MagicMock()
         mock_cache.repos = [mock_repo]
 
-        with patch("vmlx.models.registry.scan_cache_dir", return_value=mock_cache):
+        with patch("vllmlx.models.registry.scan_cache_dir", return_value=mock_cache):
             models = list_models()
 
         assert len(models) == 1
@@ -93,7 +93,7 @@ class TestListModels:
         mock_cache = MagicMock()
         mock_cache.repos = [mlx_repo, non_mlx_repo]
 
-        with patch("vmlx.models.registry.scan_cache_dir", return_value=mock_cache):
+        with patch("vllmlx.models.registry.scan_cache_dir", return_value=mock_cache):
             models = list_models()
 
         assert len(models) == 1
@@ -104,7 +104,7 @@ class TestListModels:
         mock_cache = MagicMock()
         mock_cache.repos = []
 
-        with patch("vmlx.models.registry.scan_cache_dir", return_value=mock_cache):
+        with patch("vllmlx.models.registry.scan_cache_dir", return_value=mock_cache):
             models = list_models()
 
         assert models == []
@@ -129,7 +129,7 @@ class TestDeleteModel:
         mock_cache.repos = [mock_repo]
         mock_cache.delete_revisions.return_value = mock_strategy
 
-        with patch("vmlx.models.registry.scan_cache_dir", return_value=mock_cache):
+        with patch("vllmlx.models.registry.scan_cache_dir", return_value=mock_cache):
             result = delete_model("mlx-community/Qwen2-VL-7B-Instruct-4bit")
 
         assert result is True
@@ -141,7 +141,7 @@ class TestDeleteModel:
         mock_cache = MagicMock()
         mock_cache.repos = []
 
-        with patch("vmlx.models.registry.scan_cache_dir", return_value=mock_cache):
+        with patch("vllmlx.models.registry.scan_cache_dir", return_value=mock_cache):
             result = delete_model("non-existent/model")
 
         assert result is False

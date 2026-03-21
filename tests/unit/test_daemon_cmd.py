@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from vmlx.cli.daemon_cmd import daemon
+from vllmlx.cli.daemon_cmd import daemon
 
 
 @pytest.fixture
@@ -29,11 +29,11 @@ class TestDaemonGroup:
 
 
 class TestDaemonStart:
-    """Tests for `vmlx daemon start`."""
+    """Tests for `vllmlx daemon start`."""
 
     def test_start_when_already_running(self, runner):
         """Test start shows message when daemon already running."""
-        with patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=True):
+        with patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True):
             result = runner.invoke(daemon, ["start"])
             assert result.exit_code == 0
             assert "already running" in result.output.lower()
@@ -41,10 +41,10 @@ class TestDaemonStart:
     def test_start_installs_plist_if_missing(self, runner):
         """Test start installs plist if not present."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist") as mock_install,
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist") as mock_install,
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True),
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=False))
             runner.invoke(daemon, ["start"])
@@ -53,10 +53,10 @@ class TestDaemonStart:
     def test_start_loads_daemon(self, runner):
         """Test start loads daemon with launchctl."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist"),
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True) as mock_load,
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist"),
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True) as mock_load,
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=True))
             result = runner.invoke(daemon, ["start"])
@@ -66,10 +66,10 @@ class TestDaemonStart:
     def test_start_shows_success_message(self, runner):
         """Test start shows success message on completion."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist"),
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist"),
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True),
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=True))
             result = runner.invoke(daemon, ["start"])
@@ -78,10 +78,10 @@ class TestDaemonStart:
     def test_start_shows_failure_on_load_error(self, runner):
         """Test start shows failure message when load fails."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist"),
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist"),
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=False),
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=True))
             result = runner.invoke(daemon, ["start"])
@@ -90,11 +90,17 @@ class TestDaemonStart:
 
 
 class TestDaemonStop:
-    """Tests for `vmlx daemon stop`."""
+    """Tests for `vllmlx daemon stop`."""
 
     def test_stop_when_not_running(self, runner):
         """Test stop shows message when daemon not running."""
-        with patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False):
+        with (
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
+        ):
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 0
             assert "not running" in result.output.lower()
@@ -102,9 +108,12 @@ class TestDaemonStop:
     def test_stop_unloads_daemon(self, runner):
         """Test stop unloads daemon with launchctl."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=True) as mock_unload,
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True) as mock_unload,
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
         ):
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 0
             mock_unload.assert_called_once()
@@ -112,33 +121,38 @@ class TestDaemonStop:
     def test_stop_shows_success_message(self, runner):
         """Test stop shows success message on completion."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
         ):
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["stop"])
             assert "stopped" in result.output.lower()
 
     def test_stop_shows_failure_on_unload_error(self, runner):
         """Test stop shows failure message when unload fails."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=False),
         ):
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 1
             assert "failed" in result.output.lower()
 
 
 class TestDaemonRestart:
-    """Tests for `vmlx daemon restart`."""
+    """Tests for `vllmlx daemon restart`."""
 
     def test_restart_stops_then_starts(self, runner):
         """Test restart calls unload then load."""
         with (
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=True) as mock_unload,
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist"),
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True) as mock_load,
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True) as mock_unload,
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist"),
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True) as mock_load,
             patch("time.sleep"),  # Don't actually sleep in tests
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=True))
@@ -150,10 +164,10 @@ class TestDaemonRestart:
     def test_restart_installs_plist_if_missing(self, runner):
         """Test restart installs plist if not present."""
         with (
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=True),
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
-            patch("vmlx.cli.daemon_cmd.install_plist") as mock_install,
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_plist_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist") as mock_install,
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True),
             patch("time.sleep"),
         ):
             mock_plist_path.return_value = MagicMock(exists=MagicMock(return_value=False))
@@ -162,15 +176,16 @@ class TestDaemonRestart:
 
 
 class TestDaemonStatus:
-    """Tests for `vmlx daemon status`."""
+    """Tests for `vllmlx daemon status`."""
 
     def test_status_shows_running(self, runner):
         """Test status shows running state."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
-            patch("vmlx.cli.daemon_cmd.get_daemon_pid", return_value=12345),
-            patch("vmlx.cli.daemon_cmd.Config") as mock_config,
-            patch("vmlx.cli.daemon_cmd.httpx"),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=12345),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.httpx"),
         ):
             mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["status"])
@@ -181,18 +196,35 @@ class TestDaemonStatus:
     def test_status_shows_stopped(self, runner):
         """Test status shows stopped state."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
-            patch("vmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
         ):
             mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(daemon, ["status"])
             assert result.exit_code == 0
             assert "stopped" in result.output.lower()
 
+    def test_status_shows_unmanaged_listener(self, runner):
+        """Test status shows running when listener exists without launchd state."""
+        with (
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=99999),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.httpx"),
+        ):
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            result = runner.invoke(daemon, ["status"])
+            assert result.exit_code == 0
+            assert "running" in result.output.lower()
+            assert "99999" in result.output
+            assert "unmanaged" in result.output.lower()
+
 
 class TestDaemonLogs:
-    """Tests for `vmlx daemon logs`."""
+    """Tests for `vllmlx daemon logs`."""
 
     def test_logs_shows_missing_file_message(self, runner, tmp_path, monkeypatch):
         """Test logs shows message when log file missing."""
@@ -209,7 +241,7 @@ class TestDaemonLogs:
         from pathlib import Path
 
         # Create mock log file
-        log_dir = tmp_path / ".vmlx" / "logs"
+        log_dir = tmp_path / ".vllmlx" / "logs"
         log_dir.mkdir(parents=True)
         log_file = log_dir / "daemon.log"
         log_file.write_text("log line 1\nlog line 2\n")
@@ -229,7 +261,7 @@ class TestDaemonLogs:
         """Test logs with custom line count."""
         from pathlib import Path
 
-        log_dir = tmp_path / ".vmlx" / "logs"
+        log_dir = tmp_path / ".vllmlx" / "logs"
         log_dir.mkdir(parents=True)
         log_file = log_dir / "daemon.log"
         log_file.write_text("log content")
@@ -246,7 +278,7 @@ class TestDaemonLogs:
         """Test logs with --follow flag."""
         from pathlib import Path
 
-        log_dir = tmp_path / ".vmlx" / "logs"
+        log_dir = tmp_path / ".vllmlx" / "logs"
         log_dir.mkdir(parents=True)
         log_file = log_dir / "daemon.log"
         log_file.write_text("log content")

@@ -1,4 +1,4 @@
-# PRD: vmlx - Ollama-style CLI for MLX-VLM
+# PRD: vllmlx - Ollama-style CLI for MLX-VLM
 
 **Status:** Approved  
 **Author:** lewi  
@@ -30,9 +30,9 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 ### Use Cases
 
-1. **Background API consumer**: Apps like Open WebUI, Continue.dev, or custom scripts hit `localhost:11434` expecting an LLM API - vmlx daemon serves this 24/7
-2. **Quick model experimentation**: `vmlx pull pixtral-12b && vmlx run pixtral-12b` to try a new model
-3. **Model hygiene**: `vmlx ls` to see disk usage, `vmlx rm` to clean up unused models
+1. **Background API consumer**: Apps like Open WebUI, Continue.dev, or custom scripts hit `localhost:11434` expecting an LLM API - vllmlx daemon serves this 24/7
+2. **Quick model experimentation**: `vllmlx pull pixtral-12b && vllmlx run pixtral-12b` to try a new model
+3. **Model hygiene**: `vllmlx ls` to see disk usage, `vllmlx rm` to clean up unused models
 
 ---
 
@@ -75,17 +75,17 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 - [x] **Daemon**: launchd-managed background service, auto-starts on login
 - [x] **OpenAI-compatible API**: `/v1/chat/completions` with image support at port 11434
-- [x] **CLI: `vmlx pull <model>`**: Download model from HuggingFace
-- [x] **CLI: `vmlx ls`**: List downloaded models with size info
-- [x] **CLI: `vmlx rm <model>`**: Remove downloaded model
-- [x] **CLI: `vmlx run <model>`**: Interactive `>` prompt chat session
-- [x] **CLI: `vmlx serve`**: Manual server start (for debugging/development)
-- [x] **CLI: `vmlx daemon status|restart|stop`**: Daemon management
+- [x] **CLI: `vllmlx pull <model>`**: Download model from HuggingFace
+- [x] **CLI: `vllmlx ls`**: List downloaded models with size info
+- [x] **CLI: `vllmlx rm <model>`**: Remove downloaded model
+- [x] **CLI: `vllmlx run <model>`**: Interactive `>` prompt chat session
+- [x] **CLI: `vllmlx serve`**: Manual server start (for debugging/development)
+- [x] **CLI: `vllmlx daemon status|restart|stop`**: Daemon management
 - [x] **Model aliasing**: `qwen2-vl-7b` → `mlx-community/Qwen2-VL-7B-Instruct-4bit`
 - [x] **Built-in alias registry**: Ship with popular MLX-VLM models pre-aliased
 - [x] **Hot-swap models**: Unload current model, load requested model on demand
 - [x] **Idle unload**: Unload model after configurable timeout (default 1 min)
-- [x] **Config file**: `~/.vmlx/config.toml` for settings
+- [x] **Config file**: `~/.vllmlx/config.toml` for settings
 - [x] **Graceful concurrent requests**: Handle multiple model requests sensibly
 
 ### Out of Scope (v1)
@@ -106,13 +106,13 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 ### US1: First-time Setup
 **As a** new user  
-**I want to** install vmlx and pull my first model  
+**I want to** install vllmlx and pull my first model  
 **So that** I have a working local VLM API  
 
 **Acceptance Criteria:**
-- `uv tool install vmlx` succeeds
-- `vmlx pull qwen2-vl-2b` downloads model to HF cache
-- `vmlx daemon status` shows daemon running
+- `uv tool install vllmlx` succeeds
+- `vllmlx pull qwen2-vl-2b` downloads model to HF cache
+- `vllmlx daemon status` shows daemon running
 - `curl localhost:11434/v1/models` returns available models
 
 ### US2: Persistent API Access
@@ -131,9 +131,9 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 **So that** I can manage storage  
 
 **Acceptance Criteria:**
-- `vmlx ls` shows model name, size, last used
-- `vmlx rm pixtral-12b` removes model and frees disk space
-- Removed model no longer appears in `vmlx ls`
+- `vllmlx ls` shows model name, size, last used
+- `vllmlx rm pixtral-12b` removes model and frees disk space
+- Removed model no longer appears in `vllmlx ls`
 
 ### US4: Interactive Chat
 **As a** user who wants quick model testing  
@@ -141,13 +141,13 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 **So that** I can test prompts without writing code  
 
 **Acceptance Criteria:**
-- `vmlx run qwen2-vl-7b` starts interactive session
+- `vllmlx run qwen2-vl-7b` starts interactive session
 - Simple `>` prompt accepts text input
 - Responses stream to terminal
 - Ctrl+C exits cleanly
 
 ### US5: Resource Efficiency
-**As a** user running vmlx alongside other apps  
+**As a** user running vllmlx alongside other apps  
 **I want** minimal resource usage when idle  
 **So that** my Mac stays responsive  
 
@@ -186,7 +186,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 1. **Alias registry format**: JSON file shipped with package? Fetched from GitHub?
 2. **Multiple simultaneous models**: Worth supporting if RAM allows, or always single-model?
 3. **Health check endpoint**: `/health` for monitoring? What should it return?
-4. **Logging**: Where to write daemon logs? `~/.vmlx/logs/`? 
+4. **Logging**: Where to write daemon logs? `~/.vllmlx/logs/`? 
 
 ---
 
@@ -206,33 +206,33 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 ```bash
 # Model management
-vmlx pull <model>          # Download model (alias or full HF path)
-vmlx ls                    # List downloaded models
-vmlx rm <model>            # Remove model
+vllmlx pull <model>          # Download model (alias or full HF path)
+vllmlx ls                    # List downloaded models
+vllmlx rm <model>            # Remove model
 
 # Interactive
-vmlx run <model>           # Start chat session with model
+vllmlx run <model>           # Start chat session with model
 
 # Server
-vmlx serve                 # Start server manually (foreground)
-vmlx serve --port 8080     # Custom port
+vllmlx serve                 # Start server manually (foreground)
+vllmlx serve --port 8080     # Custom port
 
 # Daemon
-vmlx daemon status         # Show daemon status
-vmlx daemon start          # Start daemon (usually automatic)
-vmlx daemon stop           # Stop daemon
-vmlx daemon restart        # Restart daemon
-vmlx daemon logs           # Tail daemon logs
+vllmlx daemon status         # Show daemon status
+vllmlx daemon start          # Start daemon (usually automatic)
+vllmlx daemon stop           # Stop daemon
+vllmlx daemon restart        # Restart daemon
+vllmlx daemon logs           # Tail daemon logs
 
 # Config
-vmlx config                # Show current config
-vmlx config set timeout 5m # Set idle timeout
-vmlx config set port 8080  # Set default port
+vllmlx config                # Show current config
+vllmlx config set timeout 5m # Set idle timeout
+vllmlx config set port 8080  # Set default port
 ```
 
 ---
 
-## Appendix: Config File (`~/.vmlx/config.toml`)
+## Appendix: Config File (`~/.vllmlx/config.toml`)
 
 ```toml
 [daemon]

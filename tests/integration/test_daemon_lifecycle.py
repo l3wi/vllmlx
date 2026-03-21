@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from vmlx.cli.main import cli
+from vllmlx.cli.main import cli
 
 
 @pytest.fixture
@@ -32,19 +32,19 @@ class TestDaemonLifecycleCommands:
         """Test daemon start --help shows documentation."""
         result = runner.invoke(cli, ["daemon", "start", "--help"])
         assert result.exit_code == 0
-        assert "Start the vmlx daemon" in result.output
+        assert "Start the vllmlx daemon" in result.output
 
     def test_daemon_stop_help(self, runner):
         """Test daemon stop --help shows documentation."""
         result = runner.invoke(cli, ["daemon", "stop", "--help"])
         assert result.exit_code == 0
-        assert "Stop the vmlx daemon" in result.output
+        assert "Stop the vllmlx daemon" in result.output
 
     def test_daemon_restart_help(self, runner):
         """Test daemon restart --help shows documentation."""
         result = runner.invoke(cli, ["daemon", "restart", "--help"])
         assert result.exit_code == 0
-        assert "Restart the vmlx daemon" in result.output
+        assert "Restart the vllmlx daemon" in result.output
 
     def test_daemon_status_help(self, runner):
         """Test daemon status --help shows documentation."""
@@ -67,11 +67,11 @@ class TestDaemonStartStopCycle:
     def test_start_stop_cycle_mocked(self, runner):
         """Test full start/stop cycle with mocked launchctl."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running") as mock_running,
-            patch("vmlx.cli.daemon_cmd.get_plist_path") as mock_path,
-            patch("vmlx.cli.daemon_cmd.install_plist") as mock_install,
-            patch("vmlx.cli.daemon_cmd.load_daemon", return_value=True),
-            patch("vmlx.cli.daemon_cmd.unload_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running") as mock_running,
+            patch("vllmlx.cli.daemon_cmd.get_plist_path") as mock_path,
+            patch("vllmlx.cli.daemon_cmd.install_plist") as mock_install,
+            patch("vllmlx.cli.daemon_cmd.load_daemon", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
         ):
             # Set up mock for start command
             mock_running.side_effect = [False, True]  # First call: not running, second: running
@@ -96,10 +96,10 @@ class TestPlistGeneration:
         """Test generated plist has required structure."""
         import plistlib
 
-        from vmlx.daemon import launchd
+        from vllmlx.daemon import launchd
 
         # Use temp directory
-        plist_path = tmp_path / "com.vmlx.daemon.plist"
+        plist_path = tmp_path / "com.vllmlx.daemon.plist"
         monkeypatch.setattr(launchd, "get_plist_path", lambda: plist_path)
         monkeypatch.setattr(launchd, "get_log_dir", lambda: tmp_path / "logs")
 
@@ -113,25 +113,25 @@ class TestPlistGeneration:
             plist = plistlib.load(f)
 
         # Verify required keys
-        assert plist["Label"] == "com.vmlx.daemon"
+        assert plist["Label"] == "com.vllmlx.daemon"
         assert plist["RunAtLoad"] is True
         assert "KeepAlive" in plist
         assert "ProgramArguments" in plist
         assert "-m" in plist["ProgramArguments"]
-        assert "vmlx.daemon" in plist["ProgramArguments"]
+        assert "vllmlx.daemon" in plist["ProgramArguments"]
 
 
 class TestDaemonEntryPoint:
     """Tests for daemon __main__.py entry point."""
 
     def test_daemon_main_file_exists(self):
-        """Test vmlx.daemon.__main__.py exists and has correct structure."""
+        """Test vllmlx.daemon.__main__.py exists and has correct structure."""
         from pathlib import Path
 
         # Find the module file
-        import vmlx.daemon
+        import vllmlx.daemon
 
-        daemon_pkg_path = Path(vmlx.daemon.__file__).parent
+        daemon_pkg_path = Path(vllmlx.daemon.__file__).parent
         main_file = daemon_pkg_path / "__main__.py"
 
         # Verify file exists
@@ -139,8 +139,8 @@ class TestDaemonEntryPoint:
 
         # Read and verify content
         content = main_file.read_text()
-        assert "from vmlx.config import Config" in content
-        assert "from vmlx.daemon.server import run_server" in content
+        assert "from vllmlx.config import Config" in content
+        assert "from vllmlx.daemon.server import run_server" in content
         assert "run_server(" in content
 
 
@@ -150,9 +150,9 @@ class TestDaemonStatusIntegration:
     def test_status_table_format(self, runner):
         """Test status command outputs table format."""
         with (
-            patch("vmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
-            patch("vmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
-            patch("vmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=False),
+            patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
         ):
             mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
             result = runner.invoke(cli, ["daemon", "status"])
@@ -172,7 +172,7 @@ class TestDaemonLogsIntegration:
         from pathlib import Path
 
         # Create mock log file
-        log_dir = tmp_path / ".vmlx" / "logs"
+        log_dir = tmp_path / ".vllmlx" / "logs"
         log_dir.mkdir(parents=True)
         log_file = log_dir / "daemon.log"
         log_content = "\n".join([f"Log line {i}" for i in range(100)])

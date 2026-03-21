@@ -1,1 +1,1 @@
-"""Tests package for vmlx."""
+"""Tests package for vllmlx."""
