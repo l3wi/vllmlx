@@ -2,15 +2,6 @@
 
 Ollama-style daemon and CLI for [vllm-mlx](https://github.com/waybarrios/vllm-mlx).
 
-## Breaking Change
-
-`vmlx` is discontinued. This package is hard-cut renamed to `vllmlx` with no compatibility layer:
-
-- no `vmlx` CLI alias
-- no `vmlx` Python package import
-- no `~/.vmlx` config path
-- no legacy `/status` route
-
 ## Features
 
 - 🚀 **Always-on daemon** - API available immediately after install, survives reboots
