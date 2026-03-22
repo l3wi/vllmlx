@@ -40,7 +40,7 @@ pipx install vllmlx
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vllmlx
+git clone https://github.com/lewi/vllmlx
 cd vllmlx
 
 # Install with pip

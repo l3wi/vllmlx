@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from vllmlx import __version__
 from vllmlx.daemon.routes import router
 from vllmlx.daemon.state import get_state, init_state
 
@@ -27,8 +28,8 @@ async def lifespan(app: FastAPI):
     if should_preload and default_model:
         async with state.lock:
             try:
-                await state.supervisor.ensure_model(default_model)
-                state.touch()
+                await state.ensure_model_loaded(default_model)
+                state.touch_model(default_model)
                 logger.info("Preloaded default model '%s' at daemon startup", default_model)
             except Exception as exc:  # pragma: no cover - defensive logging
                 logger.warning("Failed to preload default model '%s': %s", default_model, exc)
@@ -54,7 +55,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="vllmlx",
         description="Ollama-style API proxy for managed vllm-mlx workers",
-        version="0.1.0",
+        version=__version__,
         lifespan=lifespan,
     )
     app.include_router(router)

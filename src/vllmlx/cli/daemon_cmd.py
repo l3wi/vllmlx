@@ -208,16 +208,14 @@ def status():
                 data = response.json()
                 table.add_row("Backend Status", str(data.get("status", "-")))
                 loaded_models = data.get("models")
-                if isinstance(loaded_models, list):
-                    model_list = [
-                        model for model in loaded_models if isinstance(model, str) and model
-                    ]
-                    if model_list:
-                        table.add_row("Loaded Model", model_list[0])
-                        table.add_row("Loaded Models", str(len(model_list)))
-                        table.add_row("Model List", "\n".join(model_list))
-                    else:
-                        table.add_row("Loaded Model", str(data.get("model") or "-"))
+                model_list = [
+                    m for m in loaded_models if isinstance(m, str) and m
+                ] if isinstance(loaded_models, list) else []
+
+                if model_list:
+                    table.add_row("Loaded Model", model_list[0])
+                    table.add_row("Loaded Models", str(len(model_list)))
+                    table.add_row("Model List", "\n".join(model_list))
                 else:
                     table.add_row("Loaded Model", str(data.get("model") or "-"))
                 if data.get("uptime_s") is not None:

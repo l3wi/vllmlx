@@ -13,16 +13,31 @@ from vllmlx.daemon.state import DaemonState
 class _FakeSupervisor:
     def __init__(self):
         self.running = False
-        self.active_model = None
+        self.active_model: str | None = None
         self.stop_calls = 0
+        self.backend_url = "http://127.0.0.1:11435"
 
     def is_running(self) -> bool:
         return self.running
+
+    async def is_healthy(self) -> bool:
+        return self.running
+
+    async def ensure_model(self, model: str) -> None:
+        self.active_model = model
+        self.running = True
+
+    async def start(self, model: str) -> None:
+        self.active_model = model
+        self.running = True
 
     async def stop(self) -> None:
         self.running = False
         self.active_model = None
         self.stop_calls += 1
+
+    async def shutdown(self) -> None:
+        self.running = False
 
 
 @pytest.mark.asyncio
@@ -31,7 +46,7 @@ async def test_idle_timeout_stops_backend_worker():
     supervisor.running = True
     supervisor.active_model = "mlx-community/Qwen3-VL-4B-Instruct-3bit"
 
-    state = DaemonState(config=Config(), supervisor=supervisor)
+    state = DaemonState(config=Config(), primary_supervisor=supervisor)
     state.start_idle_tracking(timeout=1)
 
     try:
@@ -49,7 +64,7 @@ async def test_idle_touch_prevents_unload_until_inactive():
     supervisor.running = True
     supervisor.active_model = "mlx-community/Qwen3-VL-4B-Instruct-3bit"
 
-    state = DaemonState(config=Config(), supervisor=supervisor)
+    state = DaemonState(config=Config(), primary_supervisor=supervisor)
     state.start_idle_tracking(timeout=1)
 
     try:

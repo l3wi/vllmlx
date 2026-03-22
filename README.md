@@ -67,7 +67,7 @@ pip install vllmlx
 ### From Source
 
 ```bash
-git clone https://github.com/yourusername/vllmlx
+git clone https://github.com/lewi/vllmlx
 cd vllmlx
 pip install -e .
 ```
@@ -126,6 +126,7 @@ port = 11434
 host = "127.0.0.1"
 idle_timeout = 60  # seconds
 log_level = "info"
+health_ttl_seconds = 1.0
 
 [models]
 default = "qwen2-vl-7b"

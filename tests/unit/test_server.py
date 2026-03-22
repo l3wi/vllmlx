@@ -27,7 +27,7 @@ class _FakeSupervisor:
 class _FakeState:
     def __init__(self, config: Config):
         self.config = config
-        self.supervisor = _FakeSupervisor()
+        self.primary_supervisor = _FakeSupervisor()
         self.lock = asyncio.Lock()
         self.touch_calls = 0
         self.stop_idle_tracking_calls = 0
@@ -35,6 +35,12 @@ class _FakeState:
 
     def resolve_default_model(self) -> str | None:
         return "mlx-community/Qwen3-4B-4bit"
+
+    async def ensure_model_loaded(self, model: str) -> None:
+        await self.primary_supervisor.ensure_model(model)
+
+    def touch_model(self, model: str) -> None:
+        self.touch_calls += 1
 
     def touch(self) -> None:
         self.touch_calls += 1
@@ -61,7 +67,7 @@ async def test_lifespan_preloads_default_model_when_enabled():
         async with lifespan(FastAPI()):
             pass
 
-    assert state.supervisor.ensure_calls == ["mlx-community/Qwen3-4B-4bit"]
+    assert state.primary_supervisor.ensure_calls == ["mlx-community/Qwen3-4B-4bit"]
     assert state.touch_calls == 1
     assert state.stop_idle_tracking_calls == 1
     assert state.shutdown_calls == 1
@@ -82,6 +88,6 @@ async def test_lifespan_skips_preload_when_disabled():
         async with lifespan(FastAPI()):
             pass
 
-    assert state.supervisor.ensure_calls == []
+    assert state.primary_supervisor.ensure_calls == []
     assert state.stop_idle_tracking_calls == 1
     assert state.shutdown_calls == 1

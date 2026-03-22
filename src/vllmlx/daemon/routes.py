@@ -15,7 +15,6 @@ import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-from vllmlx.config import Config
 from vllmlx.daemon.state import get_state
 from vllmlx.models.aliases import resolve_alias
 
@@ -230,12 +229,13 @@ async def proxy_v1(path: str, request: Request) -> Response:
         except json.JSONDecodeError:
             payload = None
 
+    resolved_target_model: str | None = None
+    resolved_target_supervisor = None
+
     if request.method.upper() in {"POST", "PUT", "PATCH"}:
-        config = Config.load()
+        config = state.config
         requested = _extract_target_model(path, payload)
         resolved_requested = resolve_alias(requested, config.aliases) if requested else None
-
-        target_model: str | None = None
 
         if path == "embeddings":
             embedding_model = config.backend.embedding_model.strip()
@@ -250,34 +250,30 @@ async def proxy_v1(path: str, request: Request) -> Response:
             if isinstance(payload, dict) and resolved_embedding_model:
                 payload["model"] = resolved_embedding_model
                 raw_body = json.dumps(payload).encode("utf-8")
-            target_model = resolved_embedding_model
+            resolved_target_model = resolved_embedding_model
         elif resolved_requested:
             if isinstance(payload, dict):
                 payload["model"] = resolved_requested
                 raw_body = json.dumps(payload).encode("utf-8")
-            target_model = resolved_requested
+            resolved_target_model = resolved_requested
 
-        if target_model:
+        if resolved_target_model:
             async with state.lock:
                 try:
-                    await state.ensure_model_loaded(target_model)
-                    state.touch_model(target_model)
+                    resolved_target_supervisor = await state.ensure_model_loaded(
+                        resolved_target_model
+                    )
+                    state.touch_model(resolved_target_model)
                 except Exception as exc:
                     raise HTTPException(
                         status_code=503,
-                        detail=f"Failed to load backend model '{target_model}': {exc}",
+                        detail=f"Failed to load backend model '{resolved_target_model}': {exc}",
                     ) from exc
 
     if not state.is_running():
         raise HTTPException(status_code=503, detail="No model loaded. Send a request with a model.")
 
-    target_model = _extract_target_model(path, payload)
-    resolved_target_model = (
-        resolve_alias(target_model, state.config.aliases) if target_model else None
-    )
-    supervisor = None
-    if resolved_target_model:
-        supervisor = await state.get_supervisor_for_model(resolved_target_model)
+    supervisor = resolved_target_supervisor
     if supervisor is None:
         supervisor = await state.get_supervisor_for_any_loaded_model()
 
@@ -287,7 +283,8 @@ async def proxy_v1(path: str, request: Request) -> Response:
     if state.idle_timer is None:
         state.start_idle_tracking(state.config.daemon.idle_timeout)
 
-    state.touch()
+    if not resolved_target_model:
+        state.touch()
     return await _proxy(
         request,
         f"/v1/{path}",

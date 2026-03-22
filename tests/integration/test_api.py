@@ -19,18 +19,37 @@ class _FakeSupervisor:
         self.running = False
         self.active_model: str | None = None
         self.ensure_calls: list[str] = []
+        self.start_calls: list[str] = []
+        self.stop_calls = 0
+        self.shutdown_calls = 0
+        self.health_calls = 0
         self.backend_url = "http://127.0.0.1:12345"
 
     def is_running(self) -> bool:
         return self.running
 
     async def is_healthy(self) -> bool:
+        self.health_calls += 1
         return self.running
 
     async def ensure_model(self, model: str) -> None:
         self.ensure_calls.append(model)
         self.active_model = model
         self.running = True
+
+    async def start(self, model: str) -> None:
+        self.start_calls.append(model)
+        self.active_model = model
+        self.running = True
+
+    async def stop(self) -> None:
+        self.running = False
+        self.active_model = None
+        self.stop_calls += 1
+
+    async def shutdown(self) -> None:
+        self.running = False
+        self.shutdown_calls += 1
 
 
 class TestDaemonSurface:
@@ -77,7 +96,7 @@ class TestDaemonSurface:
                 return False
 
             supervisor.is_healthy = unhealthy
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
 
             response = client.get("/v1/models")
 
@@ -91,7 +110,7 @@ class TestProxyRouting:
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
 
             observed: dict[str, Any] = {}
 
@@ -101,12 +120,9 @@ class TestProxyRouting:
                 observed["raw_body"] = raw_body
                 return JSONResponse({"ok": True})
 
-            cfg = Config(aliases={"vision": "mlx-community/Qwen3-VL-4B-Instruct-3bit"})
+            state.config = Config(aliases={"vision": "mlx-community/Qwen3-VL-4B-Instruct-3bit"})
 
-            with (
-                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
-                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
-            ):
+            with patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy):
                 response = client.post(
                     "/v1/chat/completions",
                     json={
@@ -122,6 +138,44 @@ class TestProxyRouting:
             assert observed["backend_path"] == "/v1/chat/completions"
             assert observed["payload"]["model"] == "mlx-community/Qwen3-VL-4B-Instruct-3bit"
 
+    def test_targeted_proxy_reuses_ensured_supervisor_without_second_lookup(self):
+        app = create_app()
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.primary_supervisor = supervisor
+            state.config = Config(aliases={})
+
+            observed: dict[str, Any] = {}
+
+            async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
+                observed["backend_path"] = backend_path
+                observed["base_url"] = base_url
+                return JSONResponse({"ok": True})
+
+            async def unexpected_lookup(model: str):
+                raise AssertionError(
+                    "get_supervisor_for_model should not run for model-targeted requests"
+                )
+
+            with (
+                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
+                patch.object(state, "get_supervisor_for_model", side_effect=unexpected_lookup),
+            ):
+                response = client.post(
+                    "/v1/chat/completions",
+                    json={
+                        "model": "mlx-community/Qwen3-VL-4B-Instruct-3bit",
+                        "messages": [{"role": "user", "content": "hello"}],
+                        "stream": False,
+                    },
+                )
+
+            assert response.status_code == 200
+            assert response.json() == {"ok": True}
+            assert observed["backend_path"] == "/v1/chat/completions"
+            assert observed["base_url"] == supervisor.backend_url
+
     def test_embeddings_request_loads_embedding_model_and_proxies(self):
         app = create_app()
         with TestClient(app) as client:
@@ -129,7 +183,7 @@ class TestProxyRouting:
             supervisor = _FakeSupervisor()
             supervisor.running = True
             supervisor.active_model = "mlx-community/Qwen3-8B-4bit"
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
 
             observed: dict[str, Any] = {}
 
@@ -138,17 +192,14 @@ class TestProxyRouting:
                 observed["payload"] = payload
                 return JSONResponse({"ok": True})
 
-            cfg = Config(
+            state.config = Config(
                 aliases={},
                 backend={
                     "embedding_model": "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
                 },
             )
 
-            with (
-                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
-                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
-            ):
+            with patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy):
                 response = client.post(
                     "/v1/embeddings",
                     json={
@@ -168,7 +219,7 @@ class TestProxyRouting:
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
 
             observed: dict[str, Any] = {}
 
@@ -177,17 +228,14 @@ class TestProxyRouting:
                 observed["payload"] = payload
                 return JSONResponse({"ok": True})
 
-            cfg = Config(
+            state.config = Config(
                 aliases={},
                 backend={
                     "embedding_model": "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
                 },
             )
 
-            with (
-                patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
-                patch("vllmlx.daemon.routes.Config.load", return_value=cfg),
-            ):
+            with patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy):
                 response = client.post(
                     "/v1/embeddings",
                     json={
@@ -205,7 +253,7 @@ class TestProxyRouting:
         app = create_app()
         with TestClient(app) as client:
             state = get_state()
-            state.supervisor = _FakeSupervisor()
+            state.primary_supervisor = _FakeSupervisor()
 
             response = client.post(
                 "/v1/chat/completions",
@@ -219,7 +267,7 @@ class TestProxyRouting:
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
 
             async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 async def event_stream():
@@ -247,7 +295,7 @@ class TestProxyRouting:
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
-            state.supervisor = supervisor
+            state.primary_supervisor = supervisor
             created_clients: list[FakeAsyncClient] = []
 
             class FakeIncomingResponse:

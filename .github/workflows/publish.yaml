@@ -1,0 +1,174 @@
+---
+name: Release
+
+"on":
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Build package
+        run: uv build
+
+      - name: Store distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  verify:
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Validate tag/version consistency
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          if os.environ.get("GITHUB_REF_TYPE") != "tag":
+              print("Not a tag run; skipping tag/version check.")
+              raise SystemExit(0)
+
+          ref_name = os.environ["GITHUB_REF_NAME"]
+          if not ref_name.startswith("v"):
+              raise SystemExit(
+                  f"Release tags must start with 'v', got: {ref_name}"
+              )
+
+          with Path("pyproject.toml").open("rb") as handle:
+              pyproject = tomllib.load(handle)
+
+          project = pyproject["project"]
+          package_version = project.get("version")
+
+          if package_version is None:
+              dynamic = set(project.get("dynamic", []))
+              if "version" not in dynamic:
+                  raise SystemExit(
+                      "No static project.version and "
+                      "version is not declared dynamic"
+                  )
+              version_path = (
+                  pyproject.get("tool", {})
+                  .get("hatch", {})
+                  .get("version", {})
+                  .get("path")
+              )
+              if not version_path:
+                  raise SystemExit(
+                      "Dynamic version configured but "
+                      "tool.hatch.version.path missing"
+                  )
+              version_text = Path(version_path).read_text(encoding="utf-8")
+              match = re.search(r'__version__\s*=\s*"([^"]+)"', version_text)
+              if not match:
+                  raise SystemExit(
+                      f"Could not parse __version__ from {version_path}"
+                  )
+              package_version = match.group(1)
+
+          tag_version = ref_name[1:]
+          if tag_version != package_version:
+              raise SystemExit(
+                  f"Tag/version mismatch: tag={tag_version}, "
+                  f"package={package_version}"
+              )
+          print(f"Tag/version check passed: {ref_name} == {package_version}")
+          PY
+
+      - name: Run lint
+        run: uv run ruff check src tests
+
+      - name: Run unit tests
+        run: uv run pytest tests/unit -v
+
+      - name: Validate distribution metadata
+        run: uvx twine check dist/*
+
+      - name: Smoke test wheel install and CLI version
+        run: |
+          python3 -m venv .release-smoke
+          source .release-smoke/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install --no-deps dist/*.whl
+          python -m pip install \
+            click fastapi httpx huggingface_hub pydantic rich toml \
+            transformers uvicorn psutil
+          vllmlx --version
+
+  publish:
+    needs: verify
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/vllmlx
+    permissions:
+      id-token: write  # For trusted publishing to PyPI
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

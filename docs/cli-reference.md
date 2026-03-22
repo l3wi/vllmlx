@@ -274,6 +274,7 @@ vllmlx config set <key> <value>
 | `daemon.host` | string | API server host |
 | `daemon.idle_timeout` | int | Seconds before model unload |
 | `daemon.log_level` | string | Logging level |
+| `daemon.health_ttl_seconds` | float | Cache window for backend health checks |
 | `models.default` | string | Default model for `vllmlx run` |
 | `aliases.<name>` | string | Custom model alias |
 

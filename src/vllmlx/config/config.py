@@ -18,6 +18,7 @@ class DaemonConfig(BaseModel):
     pin_default_model: bool = False
     max_loaded_models: int = 3
     min_available_memory_gb: float = 2.0
+    health_ttl_seconds: float = 1.0
 
 
 class BackendConfig(BaseModel):

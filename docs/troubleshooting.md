@@ -184,6 +184,11 @@ First request after idle timeout is slow because the model needs to load:
    watch -n 30 'curl -s http://localhost:11434/health'
    ```
 
+3. Tune backend health probe cache to reduce per-request probe overhead:
+   ```bash
+   vllmlx config set daemon.health_ttl_seconds 2.0
+   ```
+
 ### Streaming doesn't work
 
 Make sure you're handling Server-Sent Events (SSE) correctly:
@@ -338,4 +343,4 @@ If you can't resolve the issue, open an issue on GitHub with:
 - Full error message and logs
 - Steps to reproduce
 
-GitHub Issues: https://github.com/yourusername/vllmlx/issues
+GitHub Issues: https://github.com/lewi/vllmlx/issues

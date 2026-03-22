@@ -1,6 +1,6 @@
 [project]
 name = "vllmlx"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Ollama-style daemon and CLI over vllm-mlx on Apple Silicon"
 readme = "README.md"
 license = {text = "MIT"}
@@ -51,11 +51,11 @@ dev = [
 vllmlx = "vllmlx.cli.main:cli"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/vllmlx"
-Documentation = "https://github.com/yourusername/vllmlx#readme"
-Repository = "https://github.com/yourusername/vllmlx"
-Issues = "https://github.com/yourusername/vllmlx/issues"
-Changelog = "https://github.com/yourusername/vllmlx/releases"
+Homepage = "https://github.com/lewi/vllmlx"
+Documentation = "https://github.com/lewi/vllmlx#readme"
+Repository = "https://github.com/lewi/vllmlx"
+Issues = "https://github.com/lewi/vllmlx/issues"
+Changelog = "https://github.com/lewi/vllmlx/releases"
 
 [build-system]
 requires = ["hatchling"]
@@ -63,6 +63,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vllmlx"]
+
+[tool.hatch.version]
+path = "src/vllmlx/__init__.py"
 
 [tool.ruff]
 line-length = 100

@@ -21,6 +21,7 @@ class TestDaemonConfig:
         assert config.pin_default_model is False
         assert config.max_loaded_models == 3
         assert config.min_available_memory_gb == 2.0
+        assert config.health_ttl_seconds == 1.0
 
     def test_custom_values(self):
         """Test custom values are accepted."""
@@ -33,6 +34,7 @@ class TestDaemonConfig:
             pin_default_model=True,
             max_loaded_models=5,
             min_available_memory_gb=4.0,
+            health_ttl_seconds=2.5,
         )
         assert config.port == 8080
         assert config.host == "0.0.0.0"
@@ -42,6 +44,7 @@ class TestDaemonConfig:
         assert config.pin_default_model is True
         assert config.max_loaded_models == 5
         assert config.min_available_memory_gb == 4.0
+        assert config.health_ttl_seconds == 2.5
 
 
 class TestModelsConfig:
@@ -156,6 +159,9 @@ class TestConfig:
 
         config.set("daemon.min_available_memory_gb", "3.5")
         assert config.daemon.min_available_memory_gb == 3.5
+
+        config.set("daemon.health_ttl_seconds", "2.25")
+        assert config.daemon.health_ttl_seconds == 2.25
 
         config.set("models.default", "qwen2-vl-7b")
         assert config.models.default == "qwen2-vl-7b"
