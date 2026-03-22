@@ -207,7 +207,19 @@ def status():
             if response.status_code == 200:
                 data = response.json()
                 table.add_row("Backend Status", str(data.get("status", "-")))
-                table.add_row("Loaded Model", str(data.get("model") or "-"))
+                loaded_models = data.get("models")
+                if isinstance(loaded_models, list):
+                    model_list = [
+                        model for model in loaded_models if isinstance(model, str) and model
+                    ]
+                    if model_list:
+                        table.add_row("Loaded Model", model_list[0])
+                        table.add_row("Loaded Models", str(len(model_list)))
+                        table.add_row("Model List", "\n".join(model_list))
+                    else:
+                        table.add_row("Loaded Model", str(data.get("model") or "-"))
+                else:
+                    table.add_row("Loaded Model", str(data.get("model") or "-"))
                 if data.get("uptime_s") is not None:
                     table.add_row("Uptime", f"{float(data['uptime_s']):.0f}s")
                 metal = data.get("metal") or {}

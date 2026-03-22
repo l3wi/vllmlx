@@ -14,14 +14,29 @@ class _DummySupervisor:
         self.active_model = None
         self.running = False
         self.stop_calls = 0
+        self.ensure_calls: list[str] = []
+        self.backend_url = "http://127.0.0.1:11435"
+        self.shutdown_calls = 0
 
     def is_running(self) -> bool:
         return self.running
+
+    async def is_healthy(self) -> bool:
+        return self.running
+
+    async def ensure_model(self, model: str) -> None:
+        self.ensure_calls.append(model)
+        self.active_model = model
+        self.running = True
 
     async def stop(self) -> None:
         self.running = False
         self.active_model = None
         self.stop_calls += 1
+
+    async def shutdown(self) -> None:
+        self.running = False
+        self.shutdown_calls += 1
 
 
 class TestDaemonState:
@@ -56,6 +71,85 @@ class TestDaemonState:
 
         assert supervisor.stop_calls == 1
         assert not supervisor.running
+
+    def test_resolve_default_model(self):
+        state = DaemonState(
+            config=Config(models={"default": "qwen3:4b"}),
+            supervisor=_DummySupervisor(),
+        )
+        assert state.resolve_default_model() == "mlx-community/Qwen3-4B-4bit"
+
+    @pytest.mark.asyncio
+    async def test_unload_on_idle_keeps_pinned_default_model(self):
+        supervisor = _DummySupervisor()
+        supervisor.running = True
+        supervisor.active_model = "mlx-community/Qwen3-4B-4bit"
+
+        state = DaemonState(
+            config=Config(
+                daemon={"pin_default_model": True},
+                models={"default": "qwen3:4b"},
+            ),
+            supervisor=supervisor,
+        )
+        await state._unload_on_idle()
+
+        assert supervisor.stop_calls == 0
+        assert supervisor.running
+
+    @pytest.mark.asyncio
+    async def test_unload_on_idle_unloads_stale_models_from_pool(self):
+        primary = _DummySupervisor()
+        primary.running = True
+        primary.active_model = "mlx-community/Qwen3-8B-4bit"
+
+        stale = _DummySupervisor()
+        stale.running = True
+        stale.active_model = "mlx-community/Qwen2-VL-2B-Instruct-4bit"
+        stale.backend_url = "http://127.0.0.1:11436"
+
+        state = DaemonState(
+            config=Config(daemon={"idle_timeout": 1}),
+            supervisor=primary,
+        )
+        state.model_supervisors = {
+            primary.active_model: primary,
+            stale.active_model: stale,
+        }
+        state.model_last_used = {
+            primary.active_model: datetime.now(),
+            stale.active_model: datetime.now().replace(year=2000),
+        }
+        state.model_ports = {
+            primary.active_model: 11435,
+            stale.active_model: 11436,
+        }
+
+        await state._unload_on_idle()
+
+        assert stale.stop_calls == 1
+        assert stale.active_model not in state.model_supervisors
+        assert primary.active_model in state.model_supervisors
+
+    def test_oldest_evictable_model_skips_pinned_default(self):
+        state = DaemonState(
+            config=Config(
+                daemon={"pin_default_model": True},
+                models={"default": "qwen3:8b"},
+            ),
+            supervisor=_DummySupervisor(),
+        )
+        state.model_supervisors = {
+            "mlx-community/Qwen3-8B-4bit": _DummySupervisor(),
+            "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": _DummySupervisor(),
+        }
+        state.model_last_used = {
+            "mlx-community/Qwen3-8B-4bit": datetime.now().replace(year=2000),
+            "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": datetime.now().replace(year=2001),
+        }
+
+        oldest = state._oldest_evictable_model()
+        assert oldest == "mlx-community/Qwen3-Embedding-4B-4bit-DWQ"
 
 
 class TestGlobalState:

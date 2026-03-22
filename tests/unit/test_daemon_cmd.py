@@ -222,6 +222,39 @@ class TestDaemonStatus:
             assert "99999" in result.output
             assert "unmanaged" in result.output.lower()
 
+    def test_status_shows_loaded_model_list(self, runner):
+        """Test status prints model count and list when API reports multiple models."""
+        with (
+            patch("vllmlx.cli.daemon_cmd.is_daemon_running", return_value=True),
+            patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=12345),
+            patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
+            patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
+            patch("vllmlx.cli.daemon_cmd.httpx") as mock_httpx,
+        ):
+            mock_config.load.return_value = MagicMock(
+                daemon=MagicMock(host="127.0.0.1", port=11434)
+            )
+            mock_httpx.get.return_value = MagicMock(
+                status_code=200,
+                json=MagicMock(
+                    return_value={
+                        "status": "running",
+                        "model": "mlx-community/Qwen3-8B-4bit",
+                        "models": [
+                            "mlx-community/Qwen3-8B-4bit",
+                            "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
+                        ],
+                    }
+                ),
+            )
+
+            result = runner.invoke(daemon, ["status"])
+            assert result.exit_code == 0
+            assert "loaded models" in result.output.lower()
+            assert "2" in result.output
+            assert "qwen3-8b-4bit" in result.output.lower()
+            assert "qwen3-embedding-4b-4bit-dwq" in result.output.lower()
+
 
 class TestDaemonLogs:
     """Tests for `vllmlx daemon logs`."""

@@ -55,6 +55,7 @@ class TestDaemonSurface:
         assert response.json() == {
             "status": "not_loaded",
             "model": None,
+            "models": [],
             "requests": [],
         }
 
@@ -94,7 +95,7 @@ class TestProxyRouting:
 
             observed: dict[str, Any] = {}
 
-            async def fake_proxy(request, backend_path, raw_body, payload):
+            async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 observed["backend_path"] = backend_path
                 observed["payload"] = payload
                 observed["raw_body"] = raw_body
@@ -121,21 +122,28 @@ class TestProxyRouting:
             assert observed["backend_path"] == "/v1/chat/completions"
             assert observed["payload"]["model"] == "mlx-community/Qwen3-VL-4B-Instruct-3bit"
 
-    def test_embeddings_request_auto_loads_model_and_proxies(self):
+    def test_embeddings_request_loads_embedding_model_and_proxies(self):
         app = create_app()
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
+            supervisor.running = True
+            supervisor.active_model = "mlx-community/Qwen3-8B-4bit"
             state.supervisor = supervisor
 
             observed: dict[str, Any] = {}
 
-            async def fake_proxy(request, backend_path, raw_body, payload):
+            async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 observed["backend_path"] = backend_path
                 observed["payload"] = payload
                 return JSONResponse({"ok": True})
 
-            cfg = Config(aliases={})
+            cfg = Config(
+                aliases={},
+                backend={
+                    "embedding_model": "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
+                },
+            )
 
             with (
                 patch("vllmlx.daemon.routes._proxy", side_effect=fake_proxy),
@@ -155,7 +163,7 @@ class TestProxyRouting:
             assert observed["backend_path"] == "/v1/embeddings"
             assert observed["payload"]["model"] == "mlx-community/Qwen3-Embedding-4B-4bit-DWQ"
 
-    def test_embeddings_request_uses_backend_default_when_model_omitted(self):
+    def test_embeddings_request_uses_configured_embedding_model_when_model_omitted(self):
         app = create_app()
         with TestClient(app) as client:
             state = get_state()
@@ -164,7 +172,7 @@ class TestProxyRouting:
 
             observed: dict[str, Any] = {}
 
-            async def fake_proxy(request, backend_path, raw_body, payload):
+            async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 observed["backend_path"] = backend_path
                 observed["payload"] = payload
                 return JSONResponse({"ok": True})
@@ -213,7 +221,7 @@ class TestProxyRouting:
             supervisor = _FakeSupervisor()
             state.supervisor = supervisor
 
-            async def fake_proxy(request, backend_path, raw_body, payload):
+            async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 async def event_stream():
                     yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\\n\\n"
                     yield b"data: [DONE]\\n\\n"

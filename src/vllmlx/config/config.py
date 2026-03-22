@@ -12,8 +12,12 @@ class DaemonConfig(BaseModel):
 
     port: int = 11434
     host: str = "127.0.0.1"
-    idle_timeout: int = 60
+    idle_timeout: int = 600
     log_level: str = "info"
+    preload_default_model: bool = False
+    pin_default_model: bool = False
+    max_loaded_models: int = 3
+    min_available_memory_gb: float = 2.0
 
 
 class BackendConfig(BaseModel):

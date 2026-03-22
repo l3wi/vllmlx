@@ -15,16 +15,33 @@ class TestDaemonConfig:
         config = DaemonConfig()
         assert config.port == 11434
         assert config.host == "127.0.0.1"
-        assert config.idle_timeout == 60
+        assert config.idle_timeout == 600
         assert config.log_level == "info"
+        assert config.preload_default_model is False
+        assert config.pin_default_model is False
+        assert config.max_loaded_models == 3
+        assert config.min_available_memory_gb == 2.0
 
     def test_custom_values(self):
         """Test custom values are accepted."""
-        config = DaemonConfig(port=8080, host="0.0.0.0", idle_timeout=120, log_level="debug")
+        config = DaemonConfig(
+            port=8080,
+            host="0.0.0.0",
+            idle_timeout=120,
+            log_level="debug",
+            preload_default_model=True,
+            pin_default_model=True,
+            max_loaded_models=5,
+            min_available_memory_gb=4.0,
+        )
         assert config.port == 8080
         assert config.host == "0.0.0.0"
         assert config.idle_timeout == 120
         assert config.log_level == "debug"
+        assert config.preload_default_model is True
+        assert config.pin_default_model is True
+        assert config.max_loaded_models == 5
+        assert config.min_available_memory_gb == 4.0
 
 
 class TestModelsConfig:
@@ -127,6 +144,18 @@ class TestConfig:
 
         config.set("daemon.idle_timeout", 120)
         assert config.daemon.idle_timeout == 120
+
+        config.set("daemon.preload_default_model", "true")
+        assert config.daemon.preload_default_model is True
+
+        config.set("daemon.pin_default_model", "true")
+        assert config.daemon.pin_default_model is True
+
+        config.set("daemon.max_loaded_models", "4")
+        assert config.daemon.max_loaded_models == 4
+
+        config.set("daemon.min_available_memory_gb", "3.5")
+        assert config.daemon.min_available_memory_gb == 3.5
 
         config.set("models.default", "qwen2-vl-7b")
         assert config.models.default == "qwen2-vl-7b"

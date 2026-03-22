@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime
 from typing import Any
 
 import httpx
@@ -95,11 +96,9 @@ async def _proxy(
     backend_path: str,
     raw_body: bytes,
     payload: Any,
+    base_url: str,
 ) -> Response:
     """Proxy an HTTP request to the active backend worker."""
-    state = get_state()
-    base_url = state.supervisor.backend_url
-
     headers = _filter_request_headers(request.headers)
     params = dict(request.query_params)
     method = request.method.upper()
@@ -171,28 +170,48 @@ async def health() -> dict[str, str]:
 async def status(request: Request) -> Response:
     """Return upstream status payload, or not-loaded when worker is inactive."""
     state = get_state()
+    loaded_models = state.list_loaded_models()
 
-    if not state.supervisor.is_running() or not await state.supervisor.is_healthy():
+    if not loaded_models:
         return JSONResponse(
             {
                 "status": "not_loaded",
                 "model": None,
+                "models": [],
                 "requests": [],
             }
         )
 
-    return await _proxy(request, "/v1/status", b"", None)
+    return JSONResponse(
+        {
+            "status": "running",
+            "model": loaded_models[0],
+            "models": loaded_models,
+            "requests": [],
+        }
+    )
 
 
 @router.get("/v1/models")
 async def list_models(request: Request) -> Response:
     """List currently active model from backend; empty list when unloaded."""
     state = get_state()
+    loaded_models = state.list_loaded_models()
 
-    if not state.supervisor.is_running() or not await state.supervisor.is_healthy():
+    if not loaded_models:
         return JSONResponse({"object": "list", "data": []})
 
-    return await _proxy(request, "/v1/models", b"", None)
+    created_ts = int(datetime.now().timestamp())
+    data = [
+        {
+            "id": model,
+            "object": "model",
+            "created": created_ts,
+            "owned_by": "vllm-mlx",
+        }
+        for model in loaded_models
+    ]
+    return JSONResponse({"object": "list", "data": data})
 
 
 @router.api_route(
@@ -214,39 +233,65 @@ async def proxy_v1(path: str, request: Request) -> Response:
     if request.method.upper() in {"POST", "PUT", "PATCH"}:
         config = Config.load()
         requested = _extract_target_model(path, payload)
+        resolved_requested = resolve_alias(requested, config.aliases) if requested else None
 
-        # Allow embedding requests without explicit model in payload by using
-        # configured backend embedding_model as the default.
-        if (
-            not requested
-            and path == "embeddings"
-            and isinstance(payload, dict)
-            and config.backend.embedding_model
-        ):
-            requested = config.backend.embedding_model
-            payload["model"] = requested
-            raw_body = json.dumps(payload).encode("utf-8")
+        target_model: str | None = None
 
-        if requested:
-            resolved_model = resolve_alias(requested, config.aliases)
-            if isinstance(payload, dict):
-                payload["model"] = resolved_model
+        if path == "embeddings":
+            embedding_model = config.backend.embedding_model.strip()
+            resolved_embedding_model = (
+                resolve_alias(embedding_model, config.aliases)
+                if embedding_model
+                else resolved_requested
+            )
+
+            # Embedding requests should use configured embedding model while
+            # leaving current chat model loaded (no model-swap on embeddings).
+            if isinstance(payload, dict) and resolved_embedding_model:
+                payload["model"] = resolved_embedding_model
                 raw_body = json.dumps(payload).encode("utf-8")
+            target_model = resolved_embedding_model
+        elif resolved_requested:
+            if isinstance(payload, dict):
+                payload["model"] = resolved_requested
+                raw_body = json.dumps(payload).encode("utf-8")
+            target_model = resolved_requested
 
+        if target_model:
             async with state.lock:
                 try:
-                    await state.supervisor.ensure_model(resolved_model)
+                    await state.ensure_model_loaded(target_model)
+                    state.touch_model(target_model)
                 except Exception as exc:
                     raise HTTPException(
                         status_code=503,
-                        detail=f"Failed to load backend model '{resolved_model}': {exc}",
+                        detail=f"Failed to load backend model '{target_model}': {exc}",
                     ) from exc
 
-    if not state.supervisor.is_running():
+    if not state.is_running():
         raise HTTPException(status_code=503, detail="No model loaded. Send a request with a model.")
+
+    target_model = _extract_target_model(path, payload)
+    resolved_target_model = (
+        resolve_alias(target_model, state.config.aliases) if target_model else None
+    )
+    supervisor = None
+    if resolved_target_model:
+        supervisor = await state.get_supervisor_for_model(resolved_target_model)
+    if supervisor is None:
+        supervisor = await state.get_supervisor_for_any_loaded_model()
+
+    if supervisor is None:
+        raise HTTPException(status_code=503, detail="No healthy backend workers available.")
 
     if state.idle_timer is None:
         state.start_idle_tracking(state.config.daemon.idle_timeout)
 
     state.touch()
-    return await _proxy(request, f"/v1/{path}", raw_body, payload)
+    return await _proxy(
+        request,
+        f"/v1/{path}",
+        raw_body,
+        payload,
+        base_url=supervisor.backend_url,
+    )
