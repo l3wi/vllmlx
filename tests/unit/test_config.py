@@ -70,17 +70,38 @@ class TestBackendConfig:
         assert config.port == 11435
         assert config.continuous_batching is False
         assert config.max_tokens == 32768
+        assert config.max_num_batched_tokens == 8192
+        assert config.scheduler_policy == "fcfs"
+        assert config.prefill_step_size == 2048
+        assert config.enable_prefix_cache is True
+        assert config.prefix_cache_size == 100
+        assert config.chunked_prefill_tokens == 0
+        assert config.mid_prefill_save_interval == 8192
 
     def test_custom_values(self):
         config = BackendConfig(
             port=19000,
             continuous_batching=True,
             max_tokens=4096,
+            max_num_batched_tokens=4096,
+            scheduler_policy="priority",
+            prefill_step_size=1024,
+            enable_prefix_cache=False,
+            prefix_cache_size=50,
+            chunked_prefill_tokens=2048,
+            mid_prefill_save_interval=4096,
             reasoning_parser="qwen3",
         )
         assert config.port == 19000
         assert config.continuous_batching is True
         assert config.max_tokens == 4096
+        assert config.max_num_batched_tokens == 4096
+        assert config.scheduler_policy == "priority"
+        assert config.prefill_step_size == 1024
+        assert config.enable_prefix_cache is False
+        assert config.prefix_cache_size == 50
+        assert config.chunked_prefill_tokens == 2048
+        assert config.mid_prefill_save_interval == 4096
         assert config.reasoning_parser == "qwen3"
 
 
@@ -169,8 +190,29 @@ class TestConfig:
         config.set("backend.continuous_batching", "true")
         assert config.backend.continuous_batching is True
 
+        config.set("backend.max_num_batched_tokens", "16384")
+        assert config.backend.max_num_batched_tokens == 16384
+
+        config.set("backend.scheduler_policy", "priority")
+        assert config.backend.scheduler_policy == "priority"
+
         config.set("backend.cache_memory_mb", "1024")
         assert config.backend.cache_memory_mb == 1024
+
+        config.set("backend.prefill_step_size", "1024")
+        assert config.backend.prefill_step_size == 1024
+
+        config.set("backend.enable_prefix_cache", "false")
+        assert config.backend.enable_prefix_cache is False
+
+        config.set("backend.prefix_cache_size", "250")
+        assert config.backend.prefix_cache_size == 250
+
+        config.set("backend.chunked_prefill_tokens", "2048")
+        assert config.backend.chunked_prefill_tokens == 2048
+
+        config.set("backend.mid_prefill_save_interval", "4096")
+        assert config.backend.mid_prefill_save_interval == 4096
 
     def test_set_alias_value(self, tmp_path, monkeypatch):
         """Test setting alias config values."""

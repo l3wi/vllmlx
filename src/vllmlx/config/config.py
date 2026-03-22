@@ -1,7 +1,7 @@
 """Configuration management for vllmlx."""
 
 from pathlib import Path
-from typing import Any, get_args, get_origin
+from typing import Any, Literal, get_args, get_origin
 
 import toml
 from pydantic import BaseModel
@@ -32,14 +32,21 @@ class BackendConfig(BaseModel):
     max_tokens: int = 32768
     stream_interval: int = 1
     max_num_seqs: int = 256
+    max_num_batched_tokens: int = 8192
+    scheduler_policy: Literal["fcfs", "priority"] = "fcfs"
     prefill_batch_size: int = 8
     completion_batch_size: int = 32
+    prefill_step_size: int = 2048
+    enable_prefix_cache: bool = True
+    prefix_cache_size: int = 100
     cache_memory_mb: int | None = None
     cache_memory_percent: float = 0.20
     no_memory_aware_cache: bool = False
     use_paged_cache: bool = False
     paged_cache_block_size: int = 64
     max_cache_blocks: int = 1000
+    chunked_prefill_tokens: int = 0
+    mid_prefill_save_interval: int = 8192
     api_key: str = ""
     rate_limit: int = 0
     timeout: float = 300.0

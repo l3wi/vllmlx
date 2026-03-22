@@ -70,9 +70,10 @@ For detailed installation instructions, see [docs/installation.md](docs/installa
 | Command | Description |
 |---------|-------------|
 | `vllmlx pull <model>` | Download a model |
+| `vllmlx search [query]` | Search packaged mlx-community model catalog |
 | `vllmlx ls` | List downloaded models |
 | `vllmlx rm <model>` | Remove a model |
-| `vllmlx run <model>` | Interactive chat |
+| `vllmlx run <model>` | Interactive chat (auto-starts daemon if needed) |
 | `vllmlx serve` | Run server in foreground |
 | `vllmlx daemon start` | Start background daemon |
 | `vllmlx daemon stop` | Stop daemon |
@@ -87,19 +88,31 @@ For complete command reference, see [docs/cli-reference.md](docs/cli-reference.m
 
 ## Available Models
 
-vllmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliases:
+vllmlx works with any MLX-compatible model from HuggingFace.
 
-| Alias | Model |
-|-------|-------|
-| `qwen2-vl-2b` | mlx-community/Qwen2-VL-2B-Instruct-4bit |
-| `qwen2-vl-7b` | mlx-community/Qwen2-VL-7B-Instruct-4bit |
-| `qwen2.5-vl-3b` | mlx-community/Qwen2.5-VL-3B-Instruct-4bit |
-| `qwen2.5-vl-7b` | mlx-community/Qwen2.5-VL-7B-Instruct-4bit |
-| `qwen2.5-vl-32b` | mlx-community/Qwen2.5-VL-32B-Instruct-8bit |
-| `qwen2.5-vl-72b` | mlx-community/Qwen2.5-VL-72B-Instruct-4bit |
-| `pixtral-12b` | mlx-community/pixtral-12b-4bit |
-| `llava-qwen-0.5b` | mlx-community/llava-interleave-qwen-0.5b-bf16 |
-| `llava-qwen-7b` | mlx-community/llava-interleave-qwen-7b-4bit |
+Built-in aliases are generated from the packaged `mlx-community` catalog at:
+
+- `src/vllmlx/models/data/mlx_community_models.json`
+
+Each catalog entry includes:
+
+- alias
+- HuggingFace repo id
+- simple description
+- model type (`text`, `vision`, `embedding`, `audio`)
+- release date
+- size in bytes (when available from Hub metadata)
+- updated timestamp
+
+`vllmlx search` and `vllmlx ls` use this packaged metadata locally, so discovery and cache inspection still work offline. Cached models also remain runnable offline; only new downloads require network access.
+
+Regenerate the catalog with:
+
+```bash
+uv run python scripts/update_mlx_community_catalog.py
+```
+
+Legacy short aliases like `qwen2-vl-7b`, `qwen3:8b`, and `qwen3-embedding:4b` are retained for compatibility.
 
 You can also use full HuggingFace paths:
 
@@ -115,7 +128,7 @@ Config file: `~/.vllmlx/config.toml`
 [daemon]
 port = 11434
 host = "127.0.0.1"
-idle_timeout = 60  # seconds
+idle_timeout = 600  # seconds
 log_level = "info"
 health_ttl_seconds = 1.0
 
@@ -132,6 +145,48 @@ Set values via CLI:
 vllmlx config set daemon.idle_timeout 120
 vllmlx config set models.default qwen2-vl-7b
 ```
+
+## Optimization Profiles
+
+`vllmlx` supports upstream `vllm-mlx` scheduler controls through `backend.*` config keys.
+
+Balanced API (recommended):
+
+```bash
+vllmlx config set backend.continuous_batching true
+vllmlx config set backend.stream_interval 1
+vllmlx config set backend.max_num_seqs 256
+vllmlx config set backend.max_num_batched_tokens 8192
+vllmlx config set backend.chunked_prefill_tokens 0
+```
+
+Single-user latency:
+
+```bash
+vllmlx config set backend.continuous_batching false
+vllmlx config set daemon.max_loaded_models 1
+vllmlx config set daemon.idle_timeout 600
+```
+
+Multi-user throughput:
+
+```bash
+vllmlx config set backend.continuous_batching true
+vllmlx config set backend.stream_interval 4
+vllmlx config set backend.max_num_seqs 256
+vllmlx config set backend.chunked_prefill_tokens 2048
+vllmlx config set backend.prefill_step_size 2048
+```
+
+Tradeoffs:
+
+- `backend.continuous_batching=true` improves throughput under concurrency but may add
+  overhead for single-user workloads.
+- Lower `backend.stream_interval` improves stream smoothness; higher values can improve throughput.
+- `backend.chunked_prefill_tokens > 0` improves fairness under long prompts by preventing prefill starvation.
+
+See [docs/dependency-upgrade-validation.md](docs/dependency-upgrade-validation.md) for the
+benchmark matrix and gating criteria used when validating MLX dependency upgrades.
 
 ## API
 

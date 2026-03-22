@@ -44,6 +44,7 @@ from vllmlx.cli.ls import ls
 from vllmlx.cli.pull import pull
 from vllmlx.cli.rm import rm
 from vllmlx.cli.run import run
+from vllmlx.cli.search import search
 from vllmlx.cli.serve import serve
 
 
@@ -60,6 +61,7 @@ def cli():
 # Register commands
 cli.add_command(benchmark)
 cli.add_command(pull)
+cli.add_command(search)
 cli.add_command(ls)
 cli.add_command(rm)
 cli.add_command(run)

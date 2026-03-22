@@ -35,15 +35,52 @@ vllmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
 
 ---
 
+### vllmlx search
+
+Search the packaged `mlx-community` model catalog.
+
+```bash
+vllmlx search [query] [--limit N] [--type text|vision|embedding|audio] [--json]
+```
+
+**Arguments:**
+- `[query]` - Optional search text (matches alias, repo id, type, description)
+
+**Options:**
+- `--limit <N>` - Maximum number of results (default: 20)
+- `--type <kind>` - Filter by model type
+- `--json` - Output raw JSON
+
+**Examples:**
+```bash
+# Search by keyword
+vllmlx search qwen3
+
+# Show embedding models only
+vllmlx search embedding --type embedding
+
+# Machine-readable output
+vllmlx search qwen --json
+```
+
+`vllmlx search` reads only the packaged catalog, so it works offline.
+
+---
+
 ### vllmlx ls
 
 List downloaded MLX models.
 
 ```bash
-vllmlx ls
+vllmlx ls [--type text|vision|embedding|audio]
 ```
 
 Shows all MLX-VLM compatible models in the HuggingFace cache with their sizes and modification dates.
+
+**Options:**
+- `--type <kind>` - Filter downloaded models by model type
+
+`vllmlx ls` uses packaged catalog sizes when available, so listing and incomplete-download detection keep working offline for known `mlx-community` models.
 
 **Example output:**
 ```
@@ -99,7 +136,7 @@ vllmlx run [model]
 - `[model]` - Model alias or path (optional if default configured)
 
 **Requirements:**
-- Daemon must be running (`vllmlx daemon start`)
+- Starts the daemon automatically if it is not already running
 
 **Examples:**
 ```bash
@@ -274,7 +311,30 @@ vllmlx config set <key> <value>
 | `daemon.host` | string | API server host |
 | `daemon.idle_timeout` | int | Seconds before model unload |
 | `daemon.log_level` | string | Logging level |
+| `daemon.preload_default_model` | bool | Preload default model at daemon startup |
+| `daemon.pin_default_model` | bool | Keep default model loaded during idle unload |
+| `daemon.max_loaded_models` | int | Maximum concurrently loaded backend workers |
+| `daemon.min_available_memory_gb` | float | Minimum memory headroom before model eviction |
 | `daemon.health_ttl_seconds` | float | Cache window for backend health checks |
+| `backend.continuous_batching` | bool | Enable vLLM-style continuous batching |
+| `backend.stream_interval` | int | Tokens to batch before streaming output |
+| `backend.max_num_seqs` | int | Maximum concurrent sequences in scheduler |
+| `backend.max_num_batched_tokens` | int | Max batched prefill tokens per scheduler step |
+| `backend.scheduler_policy` | string | Scheduler policy (`fcfs` or `priority`) |
+| `backend.prefill_batch_size` | int | Prefill batch size |
+| `backend.completion_batch_size` | int | Completion batch size |
+| `backend.prefill_step_size` | int | Prefill step size passed to scheduler |
+| `backend.enable_prefix_cache` | bool | Enable prefix cache for repeated prompts |
+| `backend.prefix_cache_size` | int | Prefix cache entry limit (legacy mode) |
+| `backend.cache_memory_mb` | int\|none | Explicit memory-aware cache limit in MB |
+| `backend.cache_memory_percent` | float | Auto cache memory fraction when MB not set |
+| `backend.no_memory_aware_cache` | bool | Disable memory-aware cache eviction |
+| `backend.use_paged_cache` | bool | Enable paged cache mode |
+| `backend.paged_cache_block_size` | int | Paged cache block size in tokens |
+| `backend.max_cache_blocks` | int | Maximum number of paged cache blocks |
+| `backend.chunked_prefill_tokens` | int | Chunk size for long prefills (0 disables) |
+| `backend.mid_prefill_save_interval` | int | Mid-prefill cache save interval in tokens |
+| `backend.embedding_model` | string | Default embedding model route target |
 | `models.default` | string | Default model for `vllmlx run` |
 | `aliases.<name>` | string | Custom model alias |
 
@@ -288,6 +348,11 @@ vllmlx config set models.default qwen2-vl-7b
 
 # Add custom alias
 vllmlx config set aliases.my-model some-org/some-model-4bit
+
+# Enable balanced continuous batching defaults
+vllmlx config set backend.continuous_batching true
+vllmlx config set backend.max_num_batched_tokens 8192
+vllmlx config set backend.chunked_prefill_tokens 0
 ```
 
 ---
@@ -326,19 +391,66 @@ vllmlx config path
 
 ---
 
+### Optimization Profiles
+
+#### Balanced API (recommended)
+
+```bash
+vllmlx config set backend.continuous_batching true
+vllmlx config set backend.stream_interval 1
+vllmlx config set backend.max_num_seqs 256
+vllmlx config set backend.max_num_batched_tokens 8192
+vllmlx config set backend.chunked_prefill_tokens 0
+```
+
+#### Single-user latency
+
+```bash
+vllmlx config set backend.continuous_batching false
+vllmlx config set daemon.max_loaded_models 1
+vllmlx config set daemon.idle_timeout 600
+```
+
+#### Multi-user throughput
+
+```bash
+vllmlx config set backend.continuous_batching true
+vllmlx config set backend.stream_interval 4
+vllmlx config set backend.chunked_prefill_tokens 2048
+vllmlx config set backend.prefill_step_size 2048
+```
+
+Tradeoffs:
+
+- `backend.continuous_batching`: higher concurrency throughput, potential single-user overhead.
+- `backend.stream_interval`: lower values improve stream smoothness; higher values can improve throughput.
+- `backend.chunked_prefill_tokens`: non-zero values improve fairness for long prompts by preventing prefill starvation.
+
+---
+
 ## Built-in Model Aliases
 
-| Alias | Full HuggingFace Path |
-|-------|----------------------|
-| `qwen2-vl-2b` | mlx-community/Qwen2-VL-2B-Instruct-4bit |
-| `qwen2-vl-7b` | mlx-community/Qwen2-VL-7B-Instruct-4bit |
-| `qwen2.5-vl-3b` | mlx-community/Qwen2.5-VL-3B-Instruct-4bit |
-| `qwen2.5-vl-7b` | mlx-community/Qwen2.5-VL-7B-Instruct-4bit |
-| `qwen2.5-vl-32b` | mlx-community/Qwen2.5-VL-32B-Instruct-8bit |
-| `qwen2.5-vl-72b` | mlx-community/Qwen2.5-VL-72B-Instruct-4bit |
-| `pixtral-12b` | mlx-community/pixtral-12b-4bit |
-| `llava-qwen-0.5b` | mlx-community/llava-interleave-qwen-0.5b-bf16 |
-| `llava-qwen-7b` | mlx-community/llava-interleave-qwen-7b-4bit |
+Built-in aliases are generated from the packaged `mlx-community` catalog:
+
+- `src/vllmlx/models/data/mlx_community_models.json`
+
+The generated catalog is used for alias resolution and search metadata and includes:
+
+- alias
+- repo id
+- simple description
+- model type
+- release date
+- size (when present in Hub metadata)
+- updated timestamp
+
+Regenerate the catalog:
+
+```bash
+uv run python scripts/update_mlx_community_catalog.py
+```
+
+Compatibility aliases (`qwen2-vl-7b`, `qwen3:8b`, `qwen3-vl:8b`, etc.) are still supported.
 
 ---
 

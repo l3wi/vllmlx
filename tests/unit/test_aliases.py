@@ -1,6 +1,7 @@
 """Tests for model aliases module."""
 
 from vllmlx.models.aliases import BUILTIN_ALIASES, normalize_model_name, resolve_alias
+from vllmlx.models.catalog import load_catalog_cached
 
 
 class TestBuiltinAliases:
@@ -68,6 +69,13 @@ class TestResolveAlias:
         """Test resolving unknown name returns input unchanged."""
         result = resolve_alias("unknown-model")
         assert result == "unknown-model"
+
+    def test_resolve_generated_catalog_alias(self):
+        """Test aliases generated from packaged catalog resolve correctly."""
+        catalog = load_catalog_cached()
+        assert catalog
+        sample = catalog[0]
+        assert resolve_alias(sample.alias) == sample.repo_id
 
     def test_resolve_full_hf_path_passthrough(self):
         """Test full HF path passes through unchanged."""

@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+from vllmlx.models.catalog import build_alias_index, load_catalog_cached
+
 HF_HOSTS = {"huggingface.co", "www.huggingface.co", "hf.co"}
 
-# Builtin aliases mapping short names to full HuggingFace paths.
-BUILTIN_ALIASES: dict[str, str] = {
+# Legacy aliases are retained for compatibility, even though the builtin
+# registry is now generated from the packaged mlx-community catalog.
+LEGACY_ALIASES: dict[str, str] = {
     # Legacy VLM aliases
     "qwen2-vl-2b": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
     "qwen2-vl-7b": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
@@ -25,6 +28,16 @@ BUILTIN_ALIASES: dict[str, str] = {
     "qwen3-vl:8b": "mlx-community/Qwen3-VL-8B-Instruct-4bit",
     "qwen3-embedding:4b": "mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
 }
+
+
+def _build_builtin_aliases() -> dict[str, str]:
+    aliases = build_alias_index(load_catalog_cached())
+    aliases.update(LEGACY_ALIASES)
+    return aliases
+
+
+# Builtin aliases mapping short names to full HuggingFace paths.
+BUILTIN_ALIASES: dict[str, str] = _build_builtin_aliases()
 
 
 def _extract_hf_repo_from_url(value: str) -> str | None:
