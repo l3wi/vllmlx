@@ -60,13 +60,13 @@ def _ensure_daemon_ready(config) -> bool:
 def run(model: str = None):
     """Start an interactive chat session.
 
-    MODEL is the model name or alias (e.g., qwen2-vl-7b).
+    MODEL is the model name or packaged catalog alias (e.g., qwen2-vl-7b-instruct-4bit).
     If not provided, uses the default model from config.
 
     This command always uses the running daemon.
 
     Examples:
-        vllmlx run qwen2-vl-7b
+        vllmlx run qwen2-vl-7b-instruct-4bit
         vllmlx run  # uses default model if configured
     """
     from vllmlx.chat.repl import start_chat
@@ -82,7 +82,10 @@ def run(model: str = None):
         else:
             console.print("[red]Error: No model specified and no default set[/red]")
             console.print("[dim]Usage: vllmlx run <model>[/dim]")
-            console.print("[dim]Or set default: vllmlx config set models.default qwen2-vl-7b[/dim]")
+            console.print(
+                "[dim]Or set default: vllmlx config set models.default "
+                "qwen2-vl-7b-instruct-4bit[/dim]"
+            )
             raise SystemExit(1)
 
     # Resolve alias

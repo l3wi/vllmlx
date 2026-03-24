@@ -65,10 +65,10 @@ Download your first model:
 
 ```bash
 # Recommended starter model (~2GB)
-vllmlx pull qwen2-vl-2b
+vllmlx pull qwen2-vl-2b-instruct-4bit
 
 # Or a larger, more capable model (~5GB)
-vllmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b-instruct-4bit
 ```
 
 ### 2. Start the Daemon
@@ -94,7 +94,7 @@ vllmlx daemon status
 curl http://localhost:8000/health
 
 # Start an interactive chat
-vllmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b-instruct-4bit
 ```
 
 ## Updating
@@ -133,7 +133,7 @@ rm ~/Library/LaunchAgents/com.vllmlx.daemon.plist
 vllmlx ls
 
 # Remove each model
-vllmlx rm qwen2-vl-7b --force
+vllmlx rm qwen2-vl-7b-instruct-4bit --force
 ```
 
 ### 3. Remove Configuration (Optional)

@@ -88,7 +88,7 @@ class TestDaemonState:
 
     def test_resolve_default_model(self):
         state = DaemonState(
-            config=Config(models={"default": "qwen3:4b"}),
+            config=Config(models={"default": "qwen3-4b-4bit"}),
             primary_supervisor=_DummySupervisor(),
         )
         assert state.resolve_default_model() == "mlx-community/Qwen3-4B-4bit"
@@ -102,7 +102,7 @@ class TestDaemonState:
         state = DaemonState(
             config=Config(
                 daemon={"pin_default_model": True},
-                models={"default": "qwen3:4b"},
+                models={"default": "qwen3-4b-4bit"},
             ),
             primary_supervisor=supervisor,
         )
@@ -142,7 +142,7 @@ class TestDaemonState:
         state = DaemonState(
             config=Config(
                 daemon={"pin_default_model": True},
-                models={"default": "qwen3:8b"},
+                models={"default": "qwen3-8b-4bit"},
             ),
             primary_supervisor=_DummySupervisor(),
         )

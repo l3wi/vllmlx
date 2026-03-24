@@ -57,8 +57,8 @@ class TestModelsConfig:
 
     def test_custom_values(self):
         """Test custom values are accepted."""
-        config = ModelsConfig(default="qwen2-vl-7b")
-        assert config.default == "qwen2-vl-7b"
+        config = ModelsConfig(default="qwen2-vl-7b-instruct-4bit")
+        assert config.default == "qwen2-vl-7b-instruct-4bit"
 
 
 class TestBackendConfig:
@@ -154,7 +154,7 @@ class TestConfig:
         # Create config with custom values
         original = Config(
             daemon=DaemonConfig(port=8080, idle_timeout=120),
-            models=ModelsConfig(default="qwen2-vl-7b"),
+            models=ModelsConfig(default="qwen2-vl-7b-instruct-4bit"),
             aliases={"my-model": "some-org/some-model-4bit"},
         )
         original.save()
@@ -163,7 +163,7 @@ class TestConfig:
         loaded = Config.load()
         assert loaded.daemon.port == 8080
         assert loaded.daemon.idle_timeout == 120
-        assert loaded.models.default == "qwen2-vl-7b"
+        assert loaded.models.default == "qwen2-vl-7b-instruct-4bit"
         assert loaded.aliases == {"my-model": "some-org/some-model-4bit"}
 
     def test_set_nested_value(self, tmp_path, monkeypatch):
@@ -193,8 +193,8 @@ class TestConfig:
         config.set("daemon.health_ttl_seconds", "2.25")
         assert config.daemon.health_ttl_seconds == 2.25
 
-        config.set("models.default", "qwen2-vl-7b")
-        assert config.models.default == "qwen2-vl-7b"
+        config.set("models.default", "qwen2-vl-7b-instruct-4bit")
+        assert config.models.default == "qwen2-vl-7b-instruct-4bit"
 
         config.set("backend.continuous_batching", "true")
         assert config.backend.continuous_batching is True

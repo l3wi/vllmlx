@@ -56,7 +56,7 @@ class _FakeState:
 async def test_lifespan_preloads_default_model_when_enabled():
     config = Config(
         daemon={"preload_default_model": True},
-        models={"default": "qwen3:4b"},
+        models={"default": "qwen3-4b-4bit"},
     )
     state = _FakeState(config)
 
@@ -77,7 +77,7 @@ async def test_lifespan_preloads_default_model_when_enabled():
 async def test_lifespan_skips_preload_when_disabled():
     config = Config(
         daemon={"preload_default_model": False, "pin_default_model": False},
-        models={"default": "qwen3:4b"},
+        models={"default": "qwen3-4b-4bit"},
     )
     state = _FakeState(config)
 

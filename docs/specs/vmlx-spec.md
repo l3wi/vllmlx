@@ -20,7 +20,7 @@ vllmlx is an Ollama-style CLI wrapper for MLX-VLM that provides:
 | Term | Definition |
 |------|------------|
 | **Daemon** | Background launchd-managed process running the API server |
-| **Model alias** | Short name mapping to full HuggingFace path (e.g., `qwen2-vl-7b` → `mlx-community/Qwen2-VL-7B-Instruct-4bit`) |
+| **Model alias** | Short name mapping to full HuggingFace path (e.g., `qwen2-vl-7b-instruct-4bit` → `mlx-community/Qwen2-VL-7B-Instruct-4bit`) |
 | **Hot-swap** | Unloading current model and loading a different one on demand |
 | **Idle timeout** | Duration after which loaded model is unloaded to free RAM |
 | **HF cache** | HuggingFace Hub's local model cache at `~/.cache/huggingface/hub/` |
@@ -176,13 +176,13 @@ MLX-VLM provides:
 ```python
 # vllmlx/models/aliases.py
 BUILTIN_ALIASES = {
-    "qwen2-vl-2b": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
-    "qwen2-vl-7b": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
+    "qwen2-vl-2b-instruct-4bit": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
+    "qwen2-vl-7b-instruct-4bit": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
     "qwen2.5-vl-3b": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
     "qwen2.5-vl-7b": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
     "qwen2.5-vl-32b": "mlx-community/Qwen2.5-VL-32B-Instruct-8bit",
     "qwen2.5-vl-72b": "mlx-community/Qwen2.5-VL-72B-Instruct-4bit",
-    "pixtral-12b": "mlx-community/pixtral-12b-4bit",
+    "pixtral-12b-4bit": "mlx-community/pixtral-12b-4bit",
     "llava-qwen-0.5b": "mlx-community/llava-interleave-qwen-0.5b-bf16",
     "llava-qwen-7b": "mlx-community/llava-interleave-qwen-7b-4bit",
 }
@@ -230,7 +230,7 @@ from vllmlx.config import Config
 
 config = Config.load()  # from ~/.vllmlx/config.toml
 config.daemon.port  # 8000
-config.resolve_alias("qwen2-vl-7b")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
+config.resolve_alias("qwen2-vl-7b-instruct-4bit")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
 ```
 
 #### 6. launchd Integration (`vllmlx/daemon/launchd.py`)
@@ -351,7 +351,7 @@ These mirror OpenAI's API for drop-in compatibility:
   "object": "list",
   "data": [
     {
-      "id": "qwen2-vl-7b",
+      "id": "qwen2-vl-7b-instruct-4bit",
       "object": "model",
       "created": 1706745600,
       "owned_by": "mlx-community"
@@ -365,7 +365,7 @@ These mirror OpenAI's API for drop-in compatibility:
 **Request:**
 ```json
 {
-  "model": "qwen2-vl-7b",
+  "model": "qwen2-vl-7b-instruct-4bit",
   "messages": [
     {
       "role": "user",
@@ -383,9 +383,9 @@ These mirror OpenAI's API for drop-in compatibility:
 
 **Response (streaming):**
 ```
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1706745600,"model":"qwen2-vl-7b","choices":[{"index":0,"delta":{"content":"The"},"finish_reason":null}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1706745600,"model":"qwen2-vl-7b-instruct-4bit","choices":[{"index":0,"delta":{"content":"The"},"finish_reason":null}]}
 
-data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1706745600,"model":"qwen2-vl-7b","choices":[{"index":0,"delta":{"content":" image"},"finish_reason":null}]}
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1706745600,"model":"qwen2-vl-7b-instruct-4bit","choices":[{"index":0,"delta":{"content":" image"},"finish_reason":null}]}
 
 data: [DONE]
 ```
@@ -405,7 +405,7 @@ data: [DONE]
   "running": true,
   "pid": 12345,
   "uptime_seconds": 3600.5,
-  "loaded_model": "qwen2-vl-7b",
+  "loaded_model": "qwen2-vl-7b-instruct-4bit",
   "model_loaded_at": "2026-01-30T14:00:00Z",
   "last_request_at": "2026-01-30T14:55:00Z",
   "memory_usage_mb": 4500.2,
@@ -418,7 +418,7 @@ data: [DONE]
 Force unload current model (used by `vllmlx daemon restart`).
 
 ```json
-{"success": true, "unloaded_model": "qwen2-vl-7b"}
+{"success": true, "unloaded_model": "qwen2-vl-7b-instruct-4bit"}
 ```
 
 ---
@@ -533,9 +533,9 @@ Force unload current model (used by `vllmlx daemon restart`).
 - CLI skeleton with `pull`, `ls`, `rm` commands
 
 **Deliverables:**
-- `vllmlx pull qwen2-vl-2b` downloads model
+- `vllmlx pull qwen2-vl-2b-instruct-4bit` downloads model
 - `vllmlx ls` shows downloaded models
-- `vllmlx rm qwen2-vl-2b` removes model
+- `vllmlx rm qwen2-vl-2b-instruct-4bit` removes model
 - `vllmlx config` shows config
 
 **Tests:**
@@ -622,7 +622,7 @@ Force unload current model (used by `vllmlx daemon restart`).
 - History support (optional)
 
 **Deliverables:**
-- `vllmlx run qwen2-vl-7b` starts chat
+- `vllmlx run qwen2-vl-7b-instruct-4bit` starts chat
 - Responses stream to terminal
 - Clean exit on Ctrl+C
 
@@ -682,7 +682,7 @@ Force unload current model (used by `vllmlx daemon restart`).
 ### Acceptance Criteria (from PRD)
 
 - [ ] `uv tool install vllmlx` succeeds
-- [ ] `vllmlx pull qwen2-vl-2b` downloads model
+- [ ] `vllmlx pull qwen2-vl-2b-instruct-4bit` downloads model
 - [ ] After reboot, `curl localhost:8000/v1/models` works without manual intervention
 - [ ] `vllmlx ls` shows model name, size
 - [ ] `vllmlx rm` removes model

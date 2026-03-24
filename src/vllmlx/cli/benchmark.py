@@ -203,7 +203,7 @@ def benchmark(
 ):
     """Benchmark model performance metrics.
 
-    MODEL is the model name or alias (e.g., qwen2-vl-7b).
+    MODEL is the model name or packaged catalog alias (e.g., qwen2-vl-7b-instruct-4bit).
 
     Measures:
     - Cold start time (model loading)
@@ -213,10 +213,10 @@ def benchmark(
     - Average token generation rate
 
     Examples:
-        vllmlx benchmark qwen2-vl-7b
-        vllmlx benchmark qwen2-vl-7b -n 10 -t 200
-        vllmlx benchmark qwen2-vl-7b -p "Explain AI" -p "Write a poem"
-        vllmlx benchmark qwen2-vl-7b -v  # verbose output
+        vllmlx benchmark qwen2-vl-7b-instruct-4bit
+        vllmlx benchmark qwen2-vl-7b-instruct-4bit -n 10 -t 200
+        vllmlx benchmark qwen2-vl-7b-instruct-4bit -p "Explain AI" -p "Write a poem"
+        vllmlx benchmark qwen2-vl-7b-instruct-4bit -v  # verbose output
     """
     from vllmlx.config import Config
     from vllmlx.models.aliases import resolve_alias

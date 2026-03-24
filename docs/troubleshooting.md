@@ -68,9 +68,9 @@ When a model is loaded, it uses significant RAM. To reduce idle memory usage:
    ```
 
 2. **Use smaller models**:
-   - `qwen2-vl-2b` (~2GB) - fastest, lightest
-   - `qwen2-vl-7b` (~5GB) - balanced
-   - `qwen2.5-vl-32b` (~20GB) - requires lots of RAM
+   - `qwen2-vl-2b-instruct-4bit` (~2GB) - fastest, lightest
+   - `qwen2-vl-7b-instruct-4bit` (~5GB) - balanced
+   - `qwen2.5-vl-32b-instruct-8bit` (~20GB) - requires lots of RAM
 
 ### Daemon crashes repeatedly
 
@@ -98,18 +98,15 @@ Make sure the model is downloaded:
 vllmlx ls
 
 # Download if needed
-vllmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b-instruct-4bit
 ```
 
 ### Model alias not recognized
 
-Check if you're using the correct alias:
+Look up the exact packaged alias first:
 
 ```bash
-# Built-in aliases
-qwen2-vl-2b, qwen2-vl-7b, qwen2.5-vl-3b, qwen2.5-vl-7b
-qwen2.5-vl-32b, qwen2.5-vl-72b, pixtral-12b
-llava-qwen-0.5b, llava-qwen-7b
+vllmlx search qwen2-vl
 ```
 
 Or use the full HuggingFace path:
@@ -133,8 +130,8 @@ For faster startup:
 If a download is interrupted, the model may be corrupted. Remove and re-download:
 
 ```bash
-vllmlx rm qwen2-vl-7b --force
-vllmlx pull qwen2-vl-7b
+vllmlx rm qwen2-vl-7b-instruct-4bit --force
+vllmlx pull qwen2-vl-7b-instruct-4bit
 ```
 
 ### Out of memory
@@ -143,10 +140,10 @@ Your Mac doesn't have enough RAM for the model. Model memory requirements (appro
 
 | Model | RAM Required |
 |-------|-------------|
-| qwen2-vl-2b | 4 GB |
-| qwen2-vl-7b | 8 GB |
-| qwen2.5-vl-32b | 24 GB |
-| qwen2.5-vl-72b | 48 GB |
+| qwen2-vl-2b-instruct-4bit | 4 GB |
+| qwen2-vl-7b-instruct-4bit | 8 GB |
+| qwen2.5-vl-32b-instruct-8bit | 24 GB |
+| qwen2.5-vl-72b-instruct-4bit | 48 GB |
 
 Solutions:
 1. Use a smaller model
@@ -199,7 +196,7 @@ import httpx
 
 with httpx.stream("POST", "http://localhost:8000/v1/chat/completions", 
                   json={
-                      "model": "qwen2-vl-7b",
+                      "model": "qwen2-vl-7b-instruct-4bit",
                       "messages": [{"role": "user", "content": "Hello"}],
                       "stream": True
                   }) as response:
@@ -214,7 +211,7 @@ with httpx.stream("POST", "http://localhost:8000/v1/chat/completions",
 ```bash
 curl -N http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model": "qwen2-vl-7b", "messages": [{"role": "user", "content": "Hello"}], "stream": true}'
+  -d '{"model": "qwen2-vl-7b-instruct-4bit", "messages": [{"role": "user", "content": "Hello"}], "stream": true}'
 ```
 
 ### Images not working

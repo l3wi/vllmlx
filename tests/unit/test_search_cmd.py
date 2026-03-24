@@ -15,7 +15,7 @@ def _sample_entries() -> list[CatalogEntry]:
     return [
         CatalogEntry(
             repo_id="mlx-community/Qwen3-VL-8B-Instruct-4bit",
-            alias="qwen3-vl:8b",
+            alias="qwen3-vl-8b-instruct-4bit",
             description="Vision model for multimodal chat.",
             model_type="vision",
             release_date="2026-01-01",
@@ -24,7 +24,7 @@ def _sample_entries() -> list[CatalogEntry]:
         ),
         CatalogEntry(
             repo_id="mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
-            alias="qwen3-embedding:4b",
+            alias="qwen3-embedding-4b-4bit-dwq",
             description="Embedding model for retrieval.",
             model_type="embedding",
             release_date="2026-01-10",
@@ -40,8 +40,8 @@ def test_search_command_lists_results():
         result = runner.invoke(cli, ["search", "qwen"])
 
     assert result.exit_code == 0
-    assert "qwen3-vl:8b" in result.output
-    assert "qwen3-embedding:4b" in result.output
+    assert "qwen3-vl-8b-instruct-4bit" in result.output
+    assert "qwen3-embedding-4b-4bit-dwq" in result.output
 
 
 def test_search_command_supports_type_filter():
@@ -57,8 +57,8 @@ def test_search_command_supports_type_filter():
         result = runner.invoke(cli, ["search", "qwen", "--type", "embedding"])
 
     assert result.exit_code == 0
-    assert "qwen3-embedding:4b" in result.output
-    assert "qwen3-vl:8b" not in result.output
+    assert "qwen3-embedding-4b-4bit-dwq" in result.output
+    assert "qwen3-vl-8b-instruct-4bit" not in result.output
 
 
 def test_search_command_passes_type_filter_to_catalog_search():
@@ -78,7 +78,7 @@ def test_search_command_outputs_json():
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert isinstance(payload, list)
-    assert payload[0]["alias"] == "qwen3-vl:8b"
+    assert payload[0]["alias"] == "qwen3-vl-8b-instruct-4bit"
     assert payload[0]["repo_id"] == "mlx-community/Qwen3-VL-8B-Instruct-4bit"
     assert payload[0]["size_bytes"] == 2_147_483_648
     assert payload[1]["size_bytes"] == 1_073_741_824

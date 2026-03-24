@@ -31,7 +31,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 ### Use Cases
 
 1. **Background API consumer**: Apps like Open WebUI, Continue.dev, or custom scripts hit `localhost:8000` expecting an LLM API - vllmlx daemon serves this 24/7
-2. **Quick model experimentation**: `vllmlx pull pixtral-12b && vllmlx run pixtral-12b` to try a new model
+2. **Quick model experimentation**: `vllmlx pull pixtral-12b-4bit && vllmlx run pixtral-12b-4bit` to try a new model
 3. **Model hygiene**: `vllmlx ls` to see disk usage, `vllmlx rm` to clean up unused models
 
 ---
@@ -43,7 +43,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 ### Secondary Goals
 - Ollama-familiar CLI UX (`pull`, `ls`, `rm`, `run`, `serve`)
-- Model aliasing for human-friendly names (`qwen2-vl-7b` not full HF path)
+- Model aliasing for human-friendly names (`qwen2-vl-7b-instruct-4bit` not full HF path)
 - Minimal resource usage when idle (unload model after timeout)
 - Open source for community contribution
 
@@ -81,7 +81,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 - [x] **CLI: `vllmlx run <model>`**: Interactive `>` prompt chat session
 - [x] **CLI: `vllmlx serve`**: Manual server start (for debugging/development)
 - [x] **CLI: `vllmlx daemon status|restart|stop`**: Daemon management
-- [x] **Model aliasing**: `qwen2-vl-7b` → `mlx-community/Qwen2-VL-7B-Instruct-4bit`
+- [x] **Model aliasing**: `qwen2-vl-7b-instruct-4bit` → `mlx-community/Qwen2-VL-7B-Instruct-4bit`
 - [x] **Built-in alias registry**: Ship with popular MLX-VLM models pre-aliased
 - [x] **Hot-swap models**: Unload current model, load requested model on demand
 - [x] **Idle unload**: Unload model after configurable timeout (default 1 min)
@@ -111,7 +111,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 **Acceptance Criteria:**
 - `uv tool install vllmlx` succeeds
-- `vllmlx pull qwen2-vl-2b` downloads model to HF cache
+- `vllmlx pull qwen2-vl-2b-instruct-4bit` downloads model to HF cache
 - `vllmlx daemon status` shows daemon running
 - `curl localhost:8000/v1/models` returns available models
 
@@ -132,7 +132,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 **Acceptance Criteria:**
 - `vllmlx ls` shows model name, size, last used
-- `vllmlx rm pixtral-12b` removes model and frees disk space
+- `vllmlx rm pixtral-12b-4bit` removes model and frees disk space
 - Removed model no longer appears in `vllmlx ls`
 
 ### US4: Interactive Chat
@@ -141,7 +141,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 **So that** I can test prompts without writing code  
 
 **Acceptance Criteria:**
-- `vllmlx run qwen2-vl-7b` starts interactive session
+- `vllmlx run qwen2-vl-7b-instruct-4bit` starts interactive session
 - Simple `>` prompt accepts text input
 - Responses stream to terminal
 - Ctrl+C exits cleanly
@@ -194,10 +194,10 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 | Alias | HuggingFace Path |
 |-------|------------------|
-| `qwen2-vl-2b` | `mlx-community/Qwen2-VL-2B-Instruct-4bit` |
-| `qwen2-vl-7b` | `mlx-community/Qwen2-VL-7B-Instruct-4bit` |
+| `qwen2-vl-2b-instruct-4bit` | `mlx-community/Qwen2-VL-2B-Instruct-4bit` |
+| `qwen2-vl-7b-instruct-4bit` | `mlx-community/Qwen2-VL-7B-Instruct-4bit` |
 | `qwen2.5-vl-32b` | `mlx-community/Qwen2.5-VL-32B-Instruct-8bit` |
-| `pixtral-12b` | `mlx-community/pixtral-12b-4bit` |
+| `pixtral-12b-4bit` | `mlx-community/pixtral-12b-4bit` |
 | `llava-qwen-0.5b` | `mlx-community/llava-interleave-qwen-0.5b-bf16` |
 
 ---
@@ -241,7 +241,7 @@ idle_timeout = "1m"
 auto_start = true
 
 [models]
-default = "qwen2-vl-7b"
+default = "qwen2-vl-7b-instruct-4bit"
 
 [aliases]
 # Custom aliases (in addition to built-in)

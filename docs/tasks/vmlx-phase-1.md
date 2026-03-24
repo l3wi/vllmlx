@@ -18,10 +18,10 @@ Set up project foundation with config system, model alias registry, and basic CL
 
 - [ ] Project installable via `pip install -e .`
 - [ ] `vllmlx --help` shows available commands
-- [ ] `vllmlx pull qwen2-vl-2b` downloads model from HuggingFace
+- [ ] `vllmlx pull qwen2-vl-2b-instruct-4bit` downloads model from HuggingFace
 - [ ] `vllmlx pull mlx-community/Some-Model` works with full HF paths
 - [ ] `vllmlx ls` lists downloaded models with name and size
-- [ ] `vllmlx rm qwen2-vl-2b` removes model from HF cache
+- [ ] `vllmlx rm qwen2-vl-2b-instruct-4bit` removes model from HF cache
 - [ ] `vllmlx config` displays current configuration
 - [ ] `vllmlx config set daemon.idle_timeout 120` updates config
 - [ ] Config persists to `~/.vllmlx/config.toml`
@@ -160,13 +160,13 @@ class Config(BaseModel):
 
 ```python
 BUILTIN_ALIASES = {
-    "qwen2-vl-2b": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
-    "qwen2-vl-7b": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
+    "qwen2-vl-2b-instruct-4bit": "mlx-community/Qwen2-VL-2B-Instruct-4bit",
+    "qwen2-vl-7b-instruct-4bit": "mlx-community/Qwen2-VL-7B-Instruct-4bit",
     "qwen2.5-vl-3b": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
     "qwen2.5-vl-7b": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
     "qwen2.5-vl-32b": "mlx-community/Qwen2.5-VL-32B-Instruct-8bit",
     "qwen2.5-vl-72b": "mlx-community/Qwen2.5-VL-72B-Instruct-4bit",
-    "pixtral-12b": "mlx-community/pixtral-12b-4bit",
+    "pixtral-12b-4bit": "mlx-community/pixtral-12b-4bit",
     "llava-qwen-0.5b": "mlx-community/llava-interleave-qwen-0.5b-bf16",
     "llava-qwen-7b": "mlx-community/llava-interleave-qwen-7b-4bit",
 }

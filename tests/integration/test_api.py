@@ -203,7 +203,7 @@ class TestProxyRouting:
                 response = client.post(
                     "/v1/embeddings",
                     json={
-                        "model": "qwen3-embedding:4b",
+                        "model": "qwen3-embedding-4b-4bit-dwq",
                         "input": "hello",
                     },
                 )

@@ -17,7 +17,7 @@ Implement simple interactive chat REPL via `vllmlx run <model>` that connects to
 
 ## Acceptance Criteria
 
-- [ ] `vllmlx run qwen2-vl-7b` starts interactive chat session
+- [ ] `vllmlx run qwen2-vl-7b-instruct-4bit` starts interactive chat session
 - [ ] `vllmlx run` without model uses config default (if set)
 - [ ] Simple `> ` prompt accepts text input
 - [ ] Responses stream to terminal in real-time
@@ -244,7 +244,7 @@ console = Console()
 def run(model: str = None):
     """Start an interactive chat session.
     
-    MODEL is the model name or alias (e.g., qwen2-vl-7b).
+    MODEL is the model name or alias (e.g., qwen2-vl-7b-instruct-4bit).
     If not provided, uses the default model from config.
     """
     from vllmlx.config import Config
@@ -261,7 +261,7 @@ def run(model: str = None):
         else:
             console.print("[red]Error: No model specified and no default set[/red]")
             console.print("[dim]Usage: vllmlx run <model>[/dim]")
-            console.print("[dim]Or set default: vllmlx config set models.default qwen2-vl-7b[/dim]")
+            console.print("[dim]Or set default: vllmlx config set models.default qwen2-vl-7b-instruct-4bit[/dim]")
             raise SystemExit(1)
     
     # Resolve alias
@@ -384,7 +384,7 @@ def test_send_message_connection_error(mock_httpx):
 8. Test manually:
    ```bash
    vllmlx daemon start
-   vllmlx run qwen2-vl-2b
+   vllmlx run qwen2-vl-2b-instruct-4bit
    > Hello, what can you do?
    [streaming response...]
    > /help
@@ -394,7 +394,7 @@ def test_send_message_connection_error(mock_httpx):
 9. Test error cases:
    ```bash
    vllmlx daemon stop
-   vllmlx run qwen2-vl-2b  # Should show "daemon not running"
+   vllmlx run qwen2-vl-2b-instruct-4bit  # Should show "daemon not running"
    ```
 10. Run `ruff check` and `pytest`
 11. Commit with `wt commit`

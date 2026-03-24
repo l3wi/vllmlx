@@ -60,7 +60,7 @@ def test_build_alias_index_is_case_insensitive():
     entries = [
         CatalogEntry(
             repo_id="mlx-community/Qwen3-8B-4bit",
-            alias="QWEN3:8B",
+            alias="QWEN3-8B-4BIT",
             description="desc",
             model_type="text",
             release_date="2026-03-01",
@@ -70,14 +70,14 @@ def test_build_alias_index_is_case_insensitive():
     ]
 
     aliases = build_alias_index(entries)
-    assert aliases["qwen3:8b"] == "mlx-community/Qwen3-8B-4bit"
+    assert aliases["qwen3-8b-4bit"] == "mlx-community/Qwen3-8B-4bit"
 
 
 def test_search_catalog_matches_alias_type_and_description():
     entries = [
         CatalogEntry(
             repo_id="mlx-community/Qwen3-VL-8B-Instruct-4bit",
-            alias="qwen3-vl:8b",
+            alias="qwen3-vl-8b-instruct-4bit",
             description="Vision-language model for multimodal chat.",
             model_type="vision",
             release_date="2026-01-01",
@@ -86,7 +86,7 @@ def test_search_catalog_matches_alias_type_and_description():
         ),
         CatalogEntry(
             repo_id="mlx-community/Qwen3-Embedding-4B-4bit-DWQ",
-            alias="qwen3-embedding:4b",
+            alias="qwen3-embedding-4b-4bit-dwq",
             description="Embedding model for retrieval.",
             model_type="embedding",
             release_date="2026-01-01",
@@ -96,10 +96,10 @@ def test_search_catalog_matches_alias_type_and_description():
     ]
 
     results = search_catalog("embedding", entries=entries)
-    assert results[0].alias == "qwen3-embedding:4b"
+    assert results[0].alias == "qwen3-embedding-4b-4bit-dwq"
 
     results = search_catalog("vision", entries=entries)
-    assert results[0].alias == "qwen3-vl:8b"
+    assert results[0].alias == "qwen3-vl-8b-instruct-4bit"
 
 
 def test_search_catalog_filters_type_before_limit():

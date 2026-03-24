@@ -12,12 +12,12 @@ class TestModelInfo:
     def test_model_info_creation(self):
         """Test ModelInfo can be created."""
         model = ModelInfo(
-            name="qwen2-vl-7b",
+            name="qwen2-vl-7b-instruct-4bit",
             hf_path="mlx-community/Qwen2-VL-7B-Instruct-4bit",
             size_bytes=4_000_000_000,
             last_modified=datetime(2026, 1, 30, 10, 0, 0),
         )
-        assert model.name == "qwen2-vl-7b"
+        assert model.name == "qwen2-vl-7b-instruct-4bit"
         assert model.hf_path == "mlx-community/Qwen2-VL-7B-Instruct-4bit"
         assert model.size_bytes == 4_000_000_000
         assert model.last_modified == datetime(2026, 1, 30, 10, 0, 0)

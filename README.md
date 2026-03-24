@@ -17,19 +17,19 @@ Ollama-style daemon and CLI for [vllm-mlx](https://github.com/waybarrios/vllm-ml
 uv tool install vllmlx
 
 # Pull a model
-vllmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b-instruct-4bit
 
 # Start the daemon (auto-starts on login after this)
 vllmlx daemon start
 
 # Chat interactively
-vllmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b-instruct-4bit
 
 # Or use the API
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-vl-7b",
+    "model": "qwen2-vl-7b-instruct-4bit",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
@@ -116,8 +116,6 @@ Regenerate the catalog with:
 uv run python scripts/update_mlx_community_catalog.py
 ```
 
-Legacy short aliases like `qwen2-vl-7b`, `qwen3:8b`, and `qwen3-embedding:4b` are retained for compatibility.
-
 You can also use full HuggingFace paths:
 
 ```bash
@@ -137,7 +135,7 @@ log_level = "info"
 health_ttl_seconds = 1.0
 
 [models]
-default = "qwen2-vl-7b"
+default = "qwen2-vl-7b-instruct-4bit"
 
 [aliases]
 my-model = "mlx-community/Custom-Model-4bit"
@@ -147,7 +145,7 @@ Set values via CLI:
 
 ```bash
 vllmlx config set daemon.idle_timeout 120
-vllmlx config set models.default qwen2-vl-7b
+vllmlx config set models.default qwen2-vl-7b-instruct-4bit
 ```
 
 ## Optimization Profiles
@@ -202,7 +200,7 @@ vllmlx exposes an OpenAI-compatible API at `http://localhost:8000`:
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-vl-7b",
+    "model": "qwen2-vl-7b-instruct-4bit",
     "messages": [
       {
         "role": "user",

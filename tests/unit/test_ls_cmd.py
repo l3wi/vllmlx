@@ -43,8 +43,8 @@ def test_ls_type_filter_embedding():
         "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": "embedding",
     }
     alias_map = {
-        "mlx-community/Qwen3-VL-8B-Instruct-4bit": "qwen3-vl:8b",
-        "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": "qwen3-embedding:4b",
+        "mlx-community/Qwen3-VL-8B-Instruct-4bit": "qwen3-vl-8b-instruct-4bit",
+        "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": "qwen3-embedding-4b-4bit-dwq",
     }
 
     with (
@@ -55,8 +55,8 @@ def test_ls_type_filter_embedding():
         result = runner.invoke(ls, ["--type", "embedding"])
 
     assert result.exit_code == 0
-    assert "qwen3-embedding:4b" in result.output
-    assert "qwen3-vl:8b" not in result.output
+    assert "qwen3-embedding-4b-4bit-dwq" in result.output
+    assert "qwen3-vl-8b-instruct-4bit" not in result.output
 
 
 def test_ls_type_filter_no_results():

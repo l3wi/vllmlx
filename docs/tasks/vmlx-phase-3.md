@@ -359,7 +359,7 @@ async def test_model_unloads_after_idle(test_client, loaded_model):
    ```bash
    vllmlx config set daemon.idle_timeout 30
    vllmlx serve &
-   curl -X POST localhost:8000/v1/chat/completions -d '{"model":"qwen2-vl-2b","messages":[{"role":"user","content":"hi"}]}'
+   curl -X POST localhost:8000/v1/chat/completions -d '{"model":"qwen2-vl-2b-instruct-4bit","messages":[{"role":"user","content":"hi"}]}'
    # Wait 30+ seconds
    curl localhost:8000/v1/status  # Should show no loaded model
    ```

@@ -70,19 +70,19 @@ pip install vllmlx
 uv tool install vllmlx
 
 # Pull a model
-vllmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b-instruct-4bit
 
 # Start the daemon (auto-starts on login after this)
 vllmlx daemon start
 
 # Chat interactively
-vllmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b-instruct-4bit
 
 # Or use the API
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-vl-7b",
+    "model": "qwen2-vl-7b-instruct-4bit",
     "messages": [{"role": "user", "content": "Hello!"}]
   }'
 ```
@@ -135,10 +135,10 @@ vllmlx works with any MLX-VLM compatible model from HuggingFace. Built-in aliase
 
 | Alias | Model |
 |-------|-------|
-| `qwen2-vl-2b` | mlx-community/Qwen2-VL-2B-Instruct-4bit |
-| `qwen2-vl-7b` | mlx-community/Qwen2-VL-7B-Instruct-4bit |
+| `qwen2-vl-2b-instruct-4bit` | mlx-community/Qwen2-VL-2B-Instruct-4bit |
+| `qwen2-vl-7b-instruct-4bit` | mlx-community/Qwen2-VL-7B-Instruct-4bit |
 | `qwen2.5-vl-7b` | mlx-community/Qwen2.5-VL-7B-Instruct-4bit |
-| `pixtral-12b` | mlx-community/pixtral-12b-4bit |
+| `pixtral-12b-4bit` | mlx-community/pixtral-12b-4bit |
 
 You can also use full HuggingFace paths:
 
@@ -157,7 +157,7 @@ host = "127.0.0.1"
 idle_timeout = 60  # seconds
 
 [models]
-default = "qwen2-vl-7b"
+default = "qwen2-vl-7b-instruct-4bit"
 
 [aliases]
 my-model = "mlx-community/Custom-Model-4bit"
@@ -167,7 +167,7 @@ Set values via CLI:
 
 ```bash
 vllmlx config set daemon.idle_timeout 120
-vllmlx config set models.default qwen2-vl-7b
+vllmlx config set models.default qwen2-vl-7b-instruct-4bit
 ```
 
 ## API
@@ -180,7 +180,7 @@ vllmlx exposes an OpenAI-compatible API at `http://localhost:8000`:
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "qwen2-vl-7b",
+    "model": "qwen2-vl-7b-instruct-4bit",
     "messages": [
       {
         "role": "user",
@@ -413,7 +413,7 @@ Make sure the model is downloaded:
 
 ```bash
 vllmlx ls  # Check downloaded models
-vllmlx pull qwen2-vl-7b  # Download if needed
+vllmlx pull qwen2-vl-7b-instruct-4bit  # Download if needed
 ```
 
 ### Model loading is slow
@@ -421,8 +421,8 @@ vllmlx pull qwen2-vl-7b  # Download if needed
 First load is slow due to downloading. Subsequent loads are faster.
 
 For faster startup, use smaller models:
-- `qwen2-vl-2b` (~2GB) - fastest
-- `qwen2-vl-7b` (~5GB) - balanced
+- `qwen2-vl-2b-instruct-4bit` (~2GB) - fastest
+- `qwen2-vl-7b-instruct-4bit` (~5GB) - balanced
 - `qwen2.5-vl-32b` (~20GB) - slowest
 
 ### Out of memory
@@ -431,7 +431,7 @@ Your Mac doesn't have enough RAM for the model. Try a smaller model:
 
 ```bash
 vllmlx rm qwen2.5-vl-32b
-vllmlx pull qwen2-vl-2b
+vllmlx pull qwen2-vl-2b-instruct-4bit
 ```
 
 ## API Issues
@@ -444,7 +444,7 @@ Make sure you're handling SSE correctly:
 import httpx
 
 with httpx.stream("POST", "http://localhost:8000/v1/chat/completions", 
-                  json={"model": "qwen2-vl-7b", "messages": [...], "stream": True}) as r:
+                  json={"model": "qwen2-vl-7b-instruct-4bit", "messages": [...], "stream": True}) as r:
     for line in r.iter_lines():
         if line.startswith("data: "):
             print(line[6:])

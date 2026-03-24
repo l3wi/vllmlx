@@ -16,11 +16,12 @@ console = Console()
 def rm(model: str, force: bool):
     """Remove a model from the HuggingFace cache.
 
-    MODEL can be an alias (e.g., qwen2-vl-2b) or a full HuggingFace path.
+    MODEL can be a packaged catalog alias (e.g., qwen2-vl-2b-instruct-4bit)
+    or a full HuggingFace path.
 
     Examples:
 
-        vllmlx rm qwen2-vl-2b
+        vllmlx rm qwen2-vl-2b-instruct-4bit
 
         vllmlx rm mlx-community/Some-Model-4bit --force
     """

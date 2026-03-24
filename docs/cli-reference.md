@@ -27,7 +27,7 @@ vllmlx pull <model>
 **Examples:**
 ```bash
 # Pull using alias
-vllmlx pull qwen2-vl-7b
+vllmlx pull qwen2-vl-7b-instruct-4bit
 
 # Pull using full HuggingFace path
 vllmlx pull mlx-community/Qwen2-VL-7B-Instruct-4bit
@@ -114,10 +114,10 @@ vllmlx rm <model> [--force]
 **Examples:**
 ```bash
 # Remove with confirmation
-vllmlx rm qwen2-vl-2b
+vllmlx rm qwen2-vl-2b-instruct-4bit
 
 # Remove without confirmation
-vllmlx rm qwen2-vl-2b --force
+vllmlx rm qwen2-vl-2b-instruct-4bit --force
 ```
 
 ---
@@ -141,7 +141,7 @@ vllmlx run [model]
 **Examples:**
 ```bash
 # Start chat with specific model
-vllmlx run qwen2-vl-7b
+vllmlx run qwen2-vl-7b-instruct-4bit
 
 # Start chat with default model (if configured)
 vllmlx run
@@ -178,7 +178,7 @@ vllmlx benchmark <model> [options]
 **Examples:**
 ```bash
 # Human-readable benchmark table
-vllmlx benchmark qwen3:4b
+vllmlx benchmark qwen3-4b-4bit
 
 # Machine-readable smoke run
 vllmlx benchmark mlx-community/Llama-3.2-1B-Instruct-4bit --json -n 1 -t 16 --warmup 0
@@ -278,7 +278,7 @@ Displays whether the daemon is running, its PID, and information about loaded mo
 │ PID          │ 12345            │
 │ Port         │ 8000            │
 │ Uptime       │ 3600s            │
-│ Loaded Model │ qwen2-vl-7b      │
+│ Loaded Model │ qwen2-vl-7b-instruct-4bit │
 │ Memory       │ 4500.2 MB        │
 │ Idle Timeout │ 45s              │
 └──────────────┴──────────────────┘
@@ -378,7 +378,7 @@ vllmlx config set <key> <value>
 vllmlx config set daemon.idle_timeout 120
 
 # Set default model
-vllmlx config set models.default qwen2-vl-7b
+vllmlx config set models.default qwen2-vl-7b-instruct-4bit
 
 # Add custom alias
 vllmlx config set aliases.my-model some-org/some-model-4bit
@@ -405,7 +405,7 @@ vllmlx config get daemon.port
 # daemon.port = 8000
 
 vllmlx config get models.default
-# models.default = qwen2-vl-7b
+# models.default = qwen2-vl-7b-instruct-4bit
 ```
 
 ---
@@ -484,7 +484,7 @@ Regenerate the catalog:
 uv run python scripts/update_mlx_community_catalog.py
 ```
 
-Compatibility aliases (`qwen2-vl-7b`, `qwen3:8b`, `qwen3-vl:8b`, etc.) are still supported.
+Use the generated catalog aliases shown by `vllmlx search`, or pass full HuggingFace repo ids directly.
 
 ---
 
