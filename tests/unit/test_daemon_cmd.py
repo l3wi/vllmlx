@@ -100,7 +100,7 @@ class TestDaemonStop:
             patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
             patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 0
             assert "not running" in result.output.lower()
@@ -113,7 +113,7 @@ class TestDaemonStop:
             patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True) as mock_unload,
             patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 0
             mock_unload.assert_called_once()
@@ -126,7 +126,7 @@ class TestDaemonStop:
             patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=True),
             patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["stop"])
             assert "stopped" in result.output.lower()
 
@@ -137,7 +137,7 @@ class TestDaemonStop:
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
             patch("vllmlx.cli.daemon_cmd.unload_daemon", return_value=False),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["stop"])
             assert result.exit_code == 1
             assert "failed" in result.output.lower()
@@ -187,7 +187,7 @@ class TestDaemonStatus:
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
             patch("vllmlx.cli.daemon_cmd.httpx"),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["status"])
             assert result.exit_code == 0
             assert "running" in result.output.lower()
@@ -201,7 +201,7 @@ class TestDaemonStatus:
             patch("vllmlx.cli.daemon_cmd._find_listener_pid", return_value=None),
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["status"])
             assert result.exit_code == 0
             assert "stopped" in result.output.lower()
@@ -215,7 +215,7 @@ class TestDaemonStatus:
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
             patch("vllmlx.cli.daemon_cmd.httpx"),
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(daemon, ["status"])
             assert result.exit_code == 0
             assert "running" in result.output.lower()
@@ -232,7 +232,7 @@ class TestDaemonStatus:
             patch("vllmlx.cli.daemon_cmd.httpx") as mock_httpx,
         ):
             mock_config.load.return_value = MagicMock(
-                daemon=MagicMock(host="127.0.0.1", port=11434)
+                daemon=MagicMock(host="127.0.0.1", port=8000)
             )
             mock_httpx.get.return_value = MagicMock(
                 status_code=200,

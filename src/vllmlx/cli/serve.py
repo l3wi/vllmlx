@@ -11,7 +11,7 @@ from vllmlx.config import Config
     "-p",
     default=None,
     type=int,
-    help="Port to listen on (default: 11434)",
+    help="Port to listen on (default: 8000)",
 )
 @click.option(
     "--host",
@@ -35,7 +35,7 @@ def serve(port: int | None, host: str | None, log_level: str | None):
 
     \b
     Examples:
-        vllmlx serve                    # Start with defaults (localhost:11434)
+        vllmlx serve                    # Start with defaults (localhost:8000)
         vllmlx serve --port 8080        # Start on port 8080
         vllmlx serve --host 0.0.0.0     # Allow external connections
     """

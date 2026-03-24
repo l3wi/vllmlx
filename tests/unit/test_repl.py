@@ -15,7 +15,7 @@ class TestChatSession:
         session = ChatSession("test-model")
 
         assert session.model == "test-model"
-        assert session.api_url == "http://127.0.0.1:11434"
+        assert session.api_url == "http://127.0.0.1:8000"
         assert session.messages == []
         assert session.running is True
 

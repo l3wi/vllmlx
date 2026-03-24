@@ -59,7 +59,7 @@ Ollama-style CLI for [MLX-VLM](https://github.com/Blaizzy/mlx-vlm) - Run Vision 
 - 🎯 **Simple CLI** - `vllmlx pull`, `vllmlx run`, `vllmlx ls` - familiar Ollama-style commands
 - 🔄 **Hot-swap models** - Switch models on-the-fly without restarting
 - 💾 **Smart memory** - Auto-unloads models after idle timeout
-- 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:11434`
+- 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:8000`
 
 ## Quick Start
 
@@ -79,7 +79,7 @@ vllmlx daemon start
 vllmlx run qwen2-vl-7b
 
 # Or use the API
-curl http://localhost:11434/v1/chat/completions \
+curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-vl-7b",
@@ -152,7 +152,7 @@ Config file: `~/.vllmlx/config.toml`
 
 ```toml
 [daemon]
-port = 11434
+port = 8000
 host = "127.0.0.1"
 idle_timeout = 60  # seconds
 
@@ -172,12 +172,12 @@ vllmlx config set models.default qwen2-vl-7b
 
 ## API
 
-vllmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
+vllmlx exposes an OpenAI-compatible API at `http://localhost:8000`:
 
 ### Chat Completions
 
 ```bash
-curl http://localhost:11434/v1/chat/completions \
+curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-vl-7b",
@@ -197,13 +197,13 @@ curl http://localhost:11434/v1/chat/completions \
 ### List Models
 
 ```bash
-curl http://localhost:11434/v1/models
+curl http://localhost:8000/v1/models
 ```
 
 ### Health Check
 
 ```bash
-curl http://localhost:11434/health
+curl http://localhost:8000/health
 ```
 
 ## Troubleshooting
@@ -381,7 +381,7 @@ vllmlx daemon logs
 
 1. Check if port is in use:
    ```bash
-   lsof -i :11434
+   lsof -i :8000
    ```
 
 2. Check plist is valid:
@@ -443,7 +443,7 @@ Make sure you're handling SSE correctly:
 ```python
 import httpx
 
-with httpx.stream("POST", "http://localhost:11434/v1/chat/completions", 
+with httpx.stream("POST", "http://localhost:8000/v1/chat/completions", 
                   json={"model": "qwen2-vl-7b", "messages": [...], "stream": True}) as r:
     for line in r.iter_lines():
         if line.startswith("data: "):

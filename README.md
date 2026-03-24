@@ -8,7 +8,7 @@ Ollama-style daemon and CLI for [vllm-mlx](https://github.com/waybarrios/vllm-ml
 - 🎯 **Simple CLI** - `vllmlx pull`, `vllmlx run`, `vllmlx ls` - familiar Ollama-style commands
 - 🔄 **Hot-swap models** - Switch models on-the-fly without restarting
 - 💾 **Smart memory** - Auto-unloads models after idle timeout
-- 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:11434`
+- 🤖 **OpenAI-compatible API** - Works with existing tools at `localhost:8000`
 
 ## Quick Start
 
@@ -26,7 +26,7 @@ vllmlx daemon start
 vllmlx run qwen2-vl-7b
 
 # Or use the API
-curl http://localhost:11434/v1/chat/completions \
+curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-vl-7b",
@@ -130,7 +130,7 @@ Config file: `~/.vllmlx/config.toml`
 
 ```toml
 [daemon]
-port = 11434
+port = 8000
 host = "127.0.0.1"
 idle_timeout = 600  # seconds
 log_level = "info"
@@ -194,12 +194,12 @@ benchmark matrix and gating criteria used when validating MLX dependency upgrade
 
 ## API
 
-vllmlx exposes an OpenAI-compatible API at `http://localhost:11434`:
+vllmlx exposes an OpenAI-compatible API at `http://localhost:8000`:
 
 ### Chat Completions
 
 ```bash
-curl http://localhost:11434/v1/chat/completions \
+curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen2-vl-7b",
@@ -219,19 +219,19 @@ curl http://localhost:11434/v1/chat/completions \
 ### List Models
 
 ```bash
-curl http://localhost:11434/v1/models
+curl http://localhost:8000/v1/models
 ```
 
 ### Health Check
 
 ```bash
-curl http://localhost:11434/health
+curl http://localhost:8000/health
 ```
 
 ### Status
 
 ```bash
-curl http://localhost:11434/v1/status
+curl http://localhost:8000/v1/status
 ```
 
 ## E2E Runner

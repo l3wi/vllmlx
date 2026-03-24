@@ -71,12 +71,12 @@ def setup_signal_handlers():
     signal.signal(signal.SIGTERM, handle_sigterm)
 
 
-def run_server(host: str = "127.0.0.1", port: int = 11434, log_level: str = "info"):
+def run_server(host: str = "127.0.0.1", port: int = 8000, log_level: str = "info"):
     """Run the vllmlx server.
 
     Args:
         host: Host to bind to (default: 127.0.0.1)
-        port: Port to listen on (default: 11434)
+        port: Port to listen on (default: 8000)
         log_level: Uvicorn log level (default: info)
     """
     import uvicorn

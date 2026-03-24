@@ -30,7 +30,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 ### Use Cases
 
-1. **Background API consumer**: Apps like Open WebUI, Continue.dev, or custom scripts hit `localhost:11434` expecting an LLM API - vllmlx daemon serves this 24/7
+1. **Background API consumer**: Apps like Open WebUI, Continue.dev, or custom scripts hit `localhost:8000` expecting an LLM API - vllmlx daemon serves this 24/7
 2. **Quick model experimentation**: `vllmlx pull pixtral-12b && vllmlx run pixtral-12b` to try a new model
 3. **Model hygiene**: `vllmlx ls` to see disk usage, `vllmlx rm` to clean up unused models
 
@@ -39,7 +39,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 ## Goals
 
 ### Primary Goal
-**Zero-friction local VLM API** - After install and first `pull`, the OpenAI-compatible API is always available at `localhost:11434` without manual intervention.
+**Zero-friction local VLM API** - After install and first `pull`, the OpenAI-compatible API is always available at `localhost:8000` without manual intervention.
 
 ### Secondary Goals
 - Ollama-familiar CLI UX (`pull`, `ls`, `rm`, `run`, `serve`)
@@ -74,7 +74,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 ### In Scope (v1)
 
 - [x] **Daemon**: launchd-managed background service, auto-starts on login
-- [x] **OpenAI-compatible API**: `/v1/chat/completions` with image support at port 11434
+- [x] **OpenAI-compatible API**: `/v1/chat/completions` with image support at port 8000
 - [x] **CLI: `vllmlx pull <model>`**: Download model from HuggingFace
 - [x] **CLI: `vllmlx ls`**: List downloaded models with size info
 - [x] **CLI: `vllmlx rm <model>`**: Remove downloaded model
@@ -113,7 +113,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 - `uv tool install vllmlx` succeeds
 - `vllmlx pull qwen2-vl-2b` downloads model to HF cache
 - `vllmlx daemon status` shows daemon running
-- `curl localhost:11434/v1/models` returns available models
+- `curl localhost:8000/v1/models` returns available models
 
 ### US2: Persistent API Access
 **As a** developer with apps that need LLM APIs  
@@ -122,7 +122,7 @@ MLX-VLM provides powerful Vision Language Model inference on Apple Silicon, but 
 
 **Acceptance Criteria:**
 - Reboot Mac
-- Without any manual intervention, `curl localhost:11434/v1/models` works
+- Without any manual intervention, `curl localhost:8000/v1/models` works
 - First `/v1/chat/completions` request loads model and responds
 
 ### US3: Model Management
@@ -236,7 +236,7 @@ vllmlx config set port 8080  # Set default port
 
 ```toml
 [daemon]
-port = 11434
+port = 8000
 idle_timeout = "1m"
 auto_start = true
 

@@ -199,13 +199,13 @@ vllmlx serve [options]
 ```
 
 **Options:**
-- `-p, --port <port>` - Port to listen on (default: 11434)
+- `-p, --port <port>` - Port to listen on (default: 8000)
 - `-h, --host <host>` - Host to bind to (default: 127.0.0.1)
 - `-l, --log-level <level>` - Log level: debug, info, warning, error, critical (default: info)
 
 **Examples:**
 ```bash
-# Start with defaults (localhost:11434)
+# Start with defaults (localhost:8000)
 vllmlx serve
 
 # Start on custom port
@@ -276,7 +276,7 @@ Displays whether the daemon is running, its PID, and information about loaded mo
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
 │ Status       │ Running          │
 │ PID          │ 12345            │
-│ Port         │ 11434            │
+│ Port         │ 8000            │
 │ Uptime       │ 3600s            │
 │ Loaded Model │ qwen2-vl-7b      │
 │ Memory       │ 4500.2 MB        │
@@ -402,7 +402,7 @@ vllmlx config get <key>
 **Examples:**
 ```bash
 vllmlx config get daemon.port
-# daemon.port = 11434
+# daemon.port = 8000
 
 vllmlx config get models.default
 # models.default = qwen2-vl-7b

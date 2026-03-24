@@ -124,7 +124,7 @@ from pathlib import Path
 import toml
 
 class DaemonConfig(BaseModel):
-    port: int = 11434
+    port: int = 8000
     host: str = "127.0.0.1"
     idle_timeout: int = 60
     log_level: str = "info"

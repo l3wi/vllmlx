@@ -81,7 +81,7 @@ vllmlx daemon start
 
 This installs a launchd service that:
 - Starts automatically on login
-- Provides the API at `http://localhost:11434`
+- Provides the API at `http://localhost:8000`
 - Manages model loading/unloading
 
 ### 3. Test the Installation
@@ -91,7 +91,7 @@ This installs a launchd service that:
 vllmlx daemon status
 
 # Test the API
-curl http://localhost:11434/health
+curl http://localhost:8000/health
 
 # Start an interactive chat
 vllmlx run qwen2-vl-7b
@@ -170,7 +170,7 @@ vllmlx daemon status
 vllmlx ls
 
 # Test API (requires daemon running)
-curl -s http://localhost:11434/health
+curl -s http://localhost:8000/health
 # Should output: {"status":"ok"}
 ```
 

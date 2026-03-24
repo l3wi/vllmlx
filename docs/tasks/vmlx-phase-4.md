@@ -230,7 +230,7 @@ def start():
     console.print("Starting daemon...")
     if load_daemon():
         console.print("[green]✓ Daemon started[/green]")
-        console.print(f"  API: http://127.0.0.1:11434")
+        console.print(f"  API: http://127.0.0.1:8000")
         console.print(f"  Logs: ~/.vllmlx/logs/daemon.log")
     else:
         console.print("[red]✗ Failed to start daemon[/red]")
@@ -423,7 +423,7 @@ def test_daemon_survives_signal():
    vllmlx daemon start
    vllmlx daemon status
    launchctl list | grep vllmlx  # Verify loaded
-   curl localhost:11434/health
+   curl localhost:8000/health
    vllmlx daemon logs
    vllmlx daemon stop
    ```

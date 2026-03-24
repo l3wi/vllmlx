@@ -465,7 +465,7 @@ class ScenarioHarness:
             return None
 
     @staticmethod
-    def _free_port(*, start: int = 11434) -> int:
+    def _free_port(*, start: int = 8000) -> int:
         port = start
         while port < 65535:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

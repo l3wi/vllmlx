@@ -13,7 +13,7 @@ class TestDaemonConfig:
     def test_default_values(self):
         """Test default values are set correctly."""
         config = DaemonConfig()
-        assert config.port == 11434
+        assert config.port == 8000
         assert config.host == "127.0.0.1"
         assert config.idle_timeout == 600
         assert config.log_level == "info"
@@ -111,7 +111,7 @@ class TestConfig:
     def test_default_config(self):
         """Test default config has expected values."""
         config = Config()
-        assert config.daemon.port == 11434
+        assert config.daemon.port == 8000
         assert config.backend.port == 11435
         assert config.models.default == ""
         assert config.aliases == {}
@@ -135,7 +135,7 @@ class TestConfig:
         """Test loading returns default config when file doesn't exist."""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         config = Config.load()
-        assert config.daemon.port == 11434
+        assert config.daemon.port == 8000
         assert config.models.default == ""
         assert config.aliases == {}
 

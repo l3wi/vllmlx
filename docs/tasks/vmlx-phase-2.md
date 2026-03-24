@@ -16,7 +16,7 @@ Build the core daemon with FastAPI server exposing OpenAI-compatible endpoints, 
 
 ## Acceptance Criteria
 
-- [x] `vllmlx serve` starts FastAPI server on port 11434
+- [x] `vllmlx serve` starts FastAPI server on port 8000
 - [x] `GET /health` returns `{"status": "ok"}`
 - [x] `GET /v1/models` returns list of available models
 - [x] `POST /v1/chat/completions` works with text-only messages
@@ -261,7 +261,7 @@ def create_app() -> FastAPI:
     app.include_router(router)
     return app
 
-def run_server(host: str = "127.0.0.1", port: int = 11434):
+def run_server(host: str = "127.0.0.1", port: int = 8000):
     app = create_app()
     config = uvicorn.Config(app, host=host, port=port, log_level="info")
     server = uvicorn.Server(config)
@@ -359,8 +359,8 @@ def test_list_models():
 8. Test manually with curl:
    ```bash
    vllmlx serve &
-   curl localhost:11434/health
-   curl localhost:11434/v1/models
+   curl localhost:8000/health
+   curl localhost:8000/v1/models
    ```
 9. Run `ruff check` and `pytest`
 10. Commit with `wt commit`

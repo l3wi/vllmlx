@@ -154,7 +154,7 @@ class TestDaemonStatusIntegration:
             patch("vllmlx.cli.daemon_cmd.get_daemon_pid", return_value=None),
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
         ):
-            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=11434))
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(port=8000))
             result = runner.invoke(cli, ["daemon", "status"])
 
             assert result.exit_code == 0

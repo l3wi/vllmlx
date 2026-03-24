@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.2 - 2026-03-24
+
+### Changed
+- Switched the default OpenAI-compatible API port from `11434` to `8000` across the daemon, CLI, chat client, tests, and user-facing documentation so vllmlx matches the default vLLM port.
+- Ignored local `.claude/` and `.pi/` agent artifacts and removed them from version control without deleting local files.
+
 ## 0.1.1 - 2026-03-24
 
 ### Fixed

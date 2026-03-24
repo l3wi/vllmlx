@@ -61,7 +61,7 @@ console = Console()
 class ChatSession:
     """Interactive chat session with the vllmlx daemon."""
     
-    def __init__(self, model: str, api_url: str = "http://127.0.0.1:11434"):
+    def __init__(self, model: str, api_url: str = "http://127.0.0.1:8000"):
         self.model = model
         self.api_url = api_url
         self.messages: List[dict] = []
@@ -225,7 +225,7 @@ Type your message and press Enter. Use /help for commands.
 """)
 
 
-def start_chat(model: str, api_url: str = "http://127.0.0.1:11434") -> None:
+def start_chat(model: str, api_url: str = "http://127.0.0.1:8000") -> None:
     """Start an interactive chat session."""
     session = ChatSession(model, api_url)
     session.run()

@@ -85,7 +85,7 @@ MLX-VLM provides:
 │   pull | ls | rm | run | serve | daemon | config                │
 └─────────────────────────────────────────────────────────────────┘
                               │
-                              │ HTTP (localhost:11434)
+                              │ HTTP (localhost:8000)
                               │ Unix socket (~/.vllmlx/vllmlx.sock)
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -134,7 +134,7 @@ MLX-VLM provides:
 | `vllmlx config set <key> <value>` | Update config.toml |
 
 **CLI ↔ Daemon Communication:**
-- Primary: HTTP to `localhost:11434`
+- Primary: HTTP to `localhost:8000`
 - Health check: Unix socket at `~/.vllmlx/vllmlx.sock` (faster, no port conflicts)
 
 #### 2. Daemon (`vllmlx/daemon/`)
@@ -142,7 +142,7 @@ MLX-VLM provides:
 **Technology:** FastAPI + uvicorn (matches MLX-VLM's stack)
 
 **Responsibilities:**
-- Serve OpenAI-compatible API on port 11434
+- Serve OpenAI-compatible API on port 8000
 - Manage model lifecycle (load, unload, hot-swap)
 - Track idle time and unload after timeout
 - Write logs to `~/.vllmlx/logs/`
@@ -211,7 +211,7 @@ Custom aliases loaded from `~/.vllmlx/config.toml` override builtins.
 
 ```toml
 [daemon]
-port = 11434
+port = 8000
 host = "127.0.0.1"
 idle_timeout = 60  # seconds
 log_level = "info"
@@ -229,7 +229,7 @@ default = ""  # optional default model for `vllmlx run` without args
 from vllmlx.config import Config
 
 config = Config.load()  # from ~/.vllmlx/config.toml
-config.daemon.port  # 11434
+config.daemon.port  # 8000
 config.resolve_alias("qwen2-vl-7b")  # "mlx-community/Qwen2-VL-7B-Instruct-4bit"
 ```
 
@@ -295,7 +295,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class DaemonConfig(BaseModel):
-    port: int = 11434
+    port: int = 8000
     host: str = "127.0.0.1"
     idle_timeout: int = 60
     log_level: str = "info"
@@ -557,8 +557,8 @@ Force unload current model (used by `vllmlx daemon restart`).
 - `vllmlx serve` command (foreground server)
 
 **Deliverables:**
-- `vllmlx serve` starts server on :11434
-- `curl localhost:11434/v1/models` returns models
+- `vllmlx serve` starts server on :8000
+- `curl localhost:8000/v1/models` returns models
 - Chat completions work with image input
 - Model hot-swap on different model request
 
@@ -683,7 +683,7 @@ Force unload current model (used by `vllmlx daemon restart`).
 
 - [ ] `uv tool install vllmlx` succeeds
 - [ ] `vllmlx pull qwen2-vl-2b` downloads model
-- [ ] After reboot, `curl localhost:11434/v1/models` works without manual intervention
+- [ ] After reboot, `curl localhost:8000/v1/models` works without manual intervention
 - [ ] `vllmlx ls` shows model name, size
 - [ ] `vllmlx rm` removes model
 - [ ] `vllmlx run` provides interactive chat

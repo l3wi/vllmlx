@@ -27,7 +27,7 @@ def test_run_rejects_legacy_daemon_flag():
 def test_run_starts_daemon_when_not_running():
     runner = CliRunner()
     config = SimpleNamespace(
-        daemon=SimpleNamespace(host="127.0.0.1", port=11434),
+        daemon=SimpleNamespace(host="127.0.0.1", port=8000),
         models=SimpleNamespace(default=""),
         aliases={},
     )
@@ -44,14 +44,14 @@ def test_run_starts_daemon_when_not_running():
     mock_ready.assert_called_once_with(config)
     mock_start_chat.assert_called_once_with(
         "mlx-community/Qwen3-8B-4bit",
-        "http://127.0.0.1:11434",
+        "http://127.0.0.1:8000",
     )
 
 
 def test_run_exits_when_daemon_cannot_be_started():
     runner = CliRunner()
     config = SimpleNamespace(
-        daemon=SimpleNamespace(host="127.0.0.1", port=11434),
+        daemon=SimpleNamespace(host="127.0.0.1", port=8000),
         models=SimpleNamespace(default=""),
         aliases={},
     )

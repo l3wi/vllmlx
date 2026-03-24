@@ -27,7 +27,7 @@ def get_state_dir() -> Path:
 class DaemonConfig(BaseModel):
     """Daemon configuration."""
 
-    port: int = 11434
+    port: int = 8000
     host: str = "127.0.0.1"
     idle_timeout: int = 600
     log_level: str = "info"

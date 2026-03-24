@@ -23,7 +23,7 @@ vllmlx daemon logs
 #### 1. Check if port is in use
 
 ```bash
-lsof -i :11434
+lsof -i :8000
 ```
 
 If another process is using the port, either stop it or change vllmlx's port:
@@ -181,7 +181,7 @@ First request after idle timeout is slow because the model needs to load:
 2. Keep model loaded with periodic health checks:
    ```bash
    # In a separate terminal or cron job
-   watch -n 30 'curl -s http://localhost:11434/health'
+   watch -n 30 'curl -s http://localhost:8000/health'
    ```
 
 3. Tune backend health probe cache to reduce per-request probe overhead:
@@ -197,7 +197,7 @@ Make sure you're handling Server-Sent Events (SSE) correctly:
 ```python
 import httpx
 
-with httpx.stream("POST", "http://localhost:11434/v1/chat/completions", 
+with httpx.stream("POST", "http://localhost:8000/v1/chat/completions", 
                   json={
                       "model": "qwen2-vl-7b",
                       "messages": [{"role": "user", "content": "Hello"}],
@@ -212,7 +212,7 @@ with httpx.stream("POST", "http://localhost:11434/v1/chat/completions",
 
 **curl example:**
 ```bash
-curl -N http://localhost:11434/v1/chat/completions \
+curl -N http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model": "qwen2-vl-7b", "messages": [{"role": "user", "content": "Hello"}], "stream": true}'
 ```
@@ -288,7 +288,7 @@ Or create manually:
 mkdir -p ~/.vllmlx
 cat > ~/.vllmlx/config.toml << 'EOF'
 [daemon]
-port = 11434
+port = 8000
 host = "127.0.0.1"
 idle_timeout = 60
 log_level = "info"

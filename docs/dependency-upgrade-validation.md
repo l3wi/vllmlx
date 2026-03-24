@@ -17,7 +17,7 @@ Record baseline metrics with the current `uv.lock`:
 vllmlx benchmark qwen3:4b -n 5 -t 100 --warmup 1
 
 # 2) Throughput profile proxying through API (5 concurrent clients)
-# Use your existing load harness or benchmark script against localhost:11434.
+# Use your existing load harness or benchmark script against localhost:8000.
 
 # 3) Long-prompt fairness profile
 vllmlx benchmark qwen3:4b -n 3 -t 200 \
