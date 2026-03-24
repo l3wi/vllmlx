@@ -122,6 +122,15 @@ class TestConfig:
         path = Config.path()
         assert path == tmp_path / ".vllmlx" / "config.toml"
 
+    def test_config_path_uses_state_dir_override(self, tmp_path, monkeypatch):
+        """Test config path uses VLLMLX_STATE_DIR when set."""
+        monkeypatch.setenv("VLLMLX_STATE_DIR", str(tmp_path / "isolated-state"))
+        monkeypatch.setattr(Path, "home", lambda: tmp_path / "ignored-home")
+
+        path = Config.path()
+
+        assert path == tmp_path / "isolated-state" / "config.toml"
+
     def test_load_default_when_no_file(self, tmp_path, monkeypatch):
         """Test loading returns default config when file doesn't exist."""
         monkeypatch.setattr(Path, "home", lambda: tmp_path)

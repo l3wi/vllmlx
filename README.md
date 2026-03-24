@@ -74,6 +74,7 @@ For detailed installation instructions, see [docs/installation.md](docs/installa
 | `vllmlx ls` | List downloaded models |
 | `vllmlx rm <model>` | Remove a model |
 | `vllmlx run <model>` | Interactive chat (auto-starts daemon if needed) |
+| `vllmlx benchmark <model>` | Measure cold/warm start, memory, TTFT, and token rate |
 | `vllmlx serve` | Run server in foreground |
 | `vllmlx daemon start` | Start background daemon |
 | `vllmlx daemon stop` | Stop daemon |
@@ -229,6 +230,43 @@ curl http://localhost:11434/health
 ```bash
 curl http://localhost:11434/v1/status
 ```
+
+## E2E Runner
+
+Use the dedicated external runner for real-model parity checks:
+
+```bash
+uv run python scripts/run_e2e.py --mode smoke
+```
+
+Defaults:
+
+- primary model: `mlx-community/Llama-3.2-1B-Instruct-4bit`
+- secondary model: `mlx-community/TinyLlama-1.1B-Chat-v1.0-4bit`
+- download-only model: `mlx-community/AMD-Llama-135m-4bit`
+
+Behavior:
+
+- `smoke` runs `startup_serve`, `api_core`, `run_cli`, and `benchmark_smoke`
+- `full` adds downloads, LRU reuse, and knob propagation checks
+- `--allow-launchd` enables the explicit `startup_launchd` scenario
+- logs, PTY transcripts, and the JSON report are written under `.artifacts/e2e/`
+
+Prerequisites:
+
+- main e2e scenarios expect the primary and secondary models to already exist in the Hugging Face cache
+- only the dedicated download scenario is allowed to fetch models by default
+- the runner isolates `vllmlx` state under `VLLMLX_STATE_DIR` and uses an isolated launchd label/path so it does not reuse the normal `~/.vllmlx` daemon state
+
+## Benchmark JSON
+
+`vllmlx benchmark` now supports machine-readable output:
+
+```bash
+vllmlx benchmark mlx-community/Llama-3.2-1B-Instruct-4bit --json -n 1 -t 16 --warmup 0
+```
+
+When `--json` is set, stdout contains only the benchmark summary JSON.
 
 ## Troubleshooting
 

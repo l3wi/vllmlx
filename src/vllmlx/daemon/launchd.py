@@ -12,10 +12,30 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from vllmlx.config import get_runtime_home, get_state_dir
+
 logger = logging.getLogger(__name__)
 
 LABEL = "com.vllmlx.daemon"
 PLIST_NAME = f"{LABEL}.plist"
+
+
+def get_label() -> str:
+    """Return the effective launchd label."""
+    return os.environ.get("VLLMLX_LAUNCHD_LABEL", "").strip() or LABEL
+
+
+def get_plist_name() -> str:
+    """Return the effective plist filename."""
+    return f"{get_label()}.plist"
+
+
+def get_launchd_dir() -> Path:
+    """Return the effective LaunchAgents directory."""
+    override = os.environ.get("VLLMLX_LAUNCHD_DIR", "").strip()
+    if override:
+        return Path(override).expanduser()
+    return get_runtime_home() / "Library" / "LaunchAgents"
 
 
 def get_plist_path() -> Path:
@@ -24,7 +44,7 @@ def get_plist_path() -> Path:
     Returns:
         Path to ~/Library/LaunchAgents/com.vllmlx.daemon.plist
     """
-    return Path.home() / "Library" / "LaunchAgents" / PLIST_NAME
+    return get_launchd_dir() / get_plist_name()
 
 
 def get_log_dir() -> Path:
@@ -33,7 +53,7 @@ def get_log_dir() -> Path:
     Returns:
         Path to ~/.vllmlx/logs/
     """
-    return Path.home() / ".vllmlx" / "logs"
+    return get_state_dir() / "logs"
 
 
 def get_python_path() -> str:
@@ -59,9 +79,23 @@ def generate_plist() -> dict:
     """
     log_dir = get_log_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
+    runtime_home = get_runtime_home()
+    env_vars = {
+        "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+        "HOME": str(runtime_home),
+    }
+    for name in (
+        "VLLMLX_HOME",
+        "VLLMLX_STATE_DIR",
+        "VLLMLX_LAUNCHD_LABEL",
+        "VLLMLX_LAUNCHD_DIR",
+    ):
+        value = os.environ.get(name, "").strip()
+        if value:
+            env_vars[name] = value
 
     return {
-        "Label": LABEL,
+        "Label": get_label(),
         "ProgramArguments": [
             get_python_path(),
             "-m",
@@ -73,11 +107,8 @@ def generate_plist() -> dict:
         },
         "StandardOutPath": str(log_dir / "daemon.log"),
         "StandardErrorPath": str(log_dir / "daemon.error.log"),
-        "EnvironmentVariables": {
-            "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-            "HOME": str(Path.home()),
-        },
-        "WorkingDirectory": str(Path.home()),
+        "EnvironmentVariables": env_vars,
+        "WorkingDirectory": str(runtime_home),
     }
 
 
@@ -129,7 +160,7 @@ def load_daemon() -> bool:
     )
 
     def _kickstart() -> bool:
-        target = f"gui/{os.getuid()}/{LABEL}"
+        target = f"gui/{os.getuid()}/{get_label()}"
         kick = subprocess.run(
             ["launchctl", "kickstart", "-k", target],
             capture_output=True,
@@ -203,7 +234,7 @@ def get_daemon_pid() -> Optional[int]:
         Process ID if running, None otherwise
     """
     result = subprocess.run(
-        ["launchctl", "list", LABEL],
+        ["launchctl", "list", get_label()],
         capture_output=True,
         text=True,
     )

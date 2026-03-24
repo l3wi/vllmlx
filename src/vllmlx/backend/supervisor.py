@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-from collections import deque
 import logging
 import os
 import subprocess
 import sys
 import time
+from collections import deque
 from pathlib import Path
 
 import httpx
 
-from vllmlx.config import Config
+from vllmlx.config import Config, get_runtime_home, get_state_dir
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class BackendSupervisor:
 
     async def start(self, model: str) -> None:
         """Start worker process for a model and wait for readiness."""
-        log_dir = Path.home() / ".vllmlx" / "logs"
+        log_dir = get_state_dir() / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 
         stdout_file = open(log_dir / "backend.log", "a", encoding="utf-8")
@@ -80,9 +80,26 @@ class BackendSupervisor:
         if self._config.backend.continuous_batching:
             cmd.append("--continuous-batching")
             cmd.extend(["--max-num-seqs", str(self._config.backend.max_num_seqs)])
+            cmd.extend(
+                ["--max-num-batched-tokens", str(self._config.backend.max_num_batched_tokens)]
+            )
+            cmd.extend(["--scheduler-policy", self._config.backend.scheduler_policy])
             cmd.extend(["--prefill-batch-size", str(self._config.backend.prefill_batch_size)])
             cmd.extend(
                 ["--completion-batch-size", str(self._config.backend.completion_batch_size)]
+            )
+            cmd.extend(["--prefill-step-size", str(self._config.backend.prefill_step_size)])
+            if not self._config.backend.enable_prefix_cache:
+                cmd.append("--disable-prefix-cache")
+            cmd.extend(["--prefix-cache-size", str(self._config.backend.prefix_cache_size)])
+            cmd.extend(
+                ["--chunked-prefill-tokens", str(self._config.backend.chunked_prefill_tokens)]
+            )
+            cmd.extend(
+                [
+                    "--mid-prefill-save-interval",
+                    str(self._config.backend.mid_prefill_save_interval),
+                ]
             )
 
         if self._config.backend.cache_memory_mb is not None:
@@ -137,7 +154,7 @@ class BackendSupervisor:
             stdout=stdout_file,
             stderr=stderr_file,
             text=True,
-            cwd=str(Path.home()),
+            cwd=str(get_runtime_home()),
             env=env,
         )
 

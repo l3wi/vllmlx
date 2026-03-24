@@ -7,6 +7,7 @@
 - Replaced concrete supervisor type checks with a `SupervisorProtocol` contract for primary and per-model supervisors.
 - Updated model-targeted proxy routing to reuse the supervisor returned by model loading, avoiding an immediate second supervisor lookup.
 - Reused daemon-lifetime pooled HTTP clients per backend URL for proxying, replacing per-request `httpx.AsyncClient` construction.
+- Added runtime overrides for isolated daemon state and launchd labels/paths via `VLLMLX_STATE_DIR`, `VLLMLX_HOME`, `VLLMLX_LAUNCHD_LABEL`, and `VLLMLX_LAUNCHD_DIR`.
 - Updated README default config example to `idle_timeout = 600` to match runtime defaults.
 - Expanded CLI docs with backend scheduler/cache tuning keys and optimization profile guidance.
 - Switched `vllmlx search` and `vllmlx ls` to packaged catalog size metadata so discovery and cache inspection work offline.
@@ -14,6 +15,8 @@
 - Updated `vllmlx run` to auto-start the daemon when the local API is not already running.
 
 ### Added
+- Added `vllmlx benchmark --json` for machine-readable benchmark summaries.
+- Added `scripts/run_e2e.py` plus reusable `tests/e2e/` harness modules for real-model parity scenarios covering serve startup, launchd startup, API behavior, `vllmlx run`, benchmarking, downloads, LRU reuse, and live backend knob propagation.
 - Added daemon config key `daemon.health_ttl_seconds` (default `1.0`) to cache backend health checks per model slot.
 - Added daemon state tests covering loaded-model/supervisor consistency, health TTL cache hits, health TTL expiry re-probes, and unhealthy slot replacement.
 - Added integration coverage that guards against a second supervisor lookup on model-targeted proxy requests.

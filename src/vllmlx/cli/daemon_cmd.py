@@ -4,14 +4,13 @@ import os
 import signal
 import subprocess
 import time
-from pathlib import Path
 
 import click
 import httpx
 from rich.console import Console
 from rich.table import Table
 
-from vllmlx.config import Config
+from vllmlx.config import Config, get_state_dir
 from vllmlx.daemon.launchd import (
     get_daemon_pid,
     get_plist_path,
@@ -92,7 +91,7 @@ def start():
         config = Config.load()
         console.print("[green]✓ Daemon started[/green]")
         console.print(f"  API: http://{config.daemon.host}:{config.daemon.port}")
-        console.print("  Logs: ~/.vllmlx/logs/daemon.log")
+        console.print(f"  Logs: {get_state_dir() / 'logs' / 'daemon.log'}")
     else:
         console.print("[red]✗ Failed to start daemon[/red]")
         raise SystemExit(1)
@@ -208,9 +207,11 @@ def status():
                 data = response.json()
                 table.add_row("Backend Status", str(data.get("status", "-")))
                 loaded_models = data.get("models")
-                model_list = [
-                    m for m in loaded_models if isinstance(m, str) and m
-                ] if isinstance(loaded_models, list) else []
+                model_list = (
+                    [m for m in loaded_models if isinstance(m, str) and m]
+                    if isinstance(loaded_models, list)
+                    else []
+                )
 
                 if model_list:
                     table.add_row("Loaded Model", model_list[0])
@@ -243,7 +244,7 @@ def logs(follow: bool, lines: int):
         vllmlx daemon logs -n 100     # Show last 100 lines
         vllmlx daemon logs -f         # Follow log output
     """
-    log_path = Path.home() / ".vllmlx" / "logs" / "daemon.log"
+    log_path = get_state_dir() / "logs" / "daemon.log"
 
     if not log_path.exists():
         console.print(f"[yellow]Log file not found: {log_path}[/yellow]")

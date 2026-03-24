@@ -47,6 +47,17 @@ class TestGetPlistPath:
         path = get_plist_path()
         assert path.name == f"{LABEL}.plist"
 
+    def test_plist_path_uses_override_directory_and_label(self, tmp_path, monkeypatch):
+        """Test plist path honors launchd directory and label overrides."""
+        from vllmlx.daemon.launchd import get_plist_path
+
+        monkeypatch.setenv("VLLMLX_LAUNCHD_DIR", str(tmp_path / "agents"))
+        monkeypatch.setenv("VLLMLX_LAUNCHD_LABEL", "dev.vllmlx.e2e")
+
+        path = get_plist_path()
+
+        assert path == tmp_path / "agents" / "dev.vllmlx.e2e.plist"
+
 
 class TestGetLogDir:
     """Tests for get_log_dir function."""
@@ -166,6 +177,25 @@ class TestGeneratePlist:
         plist = generate_plist()
         assert "WorkingDirectory" in plist
         assert plist["WorkingDirectory"] == str(Path.home())
+
+    def test_generate_plist_uses_isolated_runtime_overrides(self, tmp_path, monkeypatch):
+        """Test plist forwards runtime isolation env vars when present."""
+        from vllmlx.daemon.launchd import generate_plist
+
+        monkeypatch.setenv("VLLMLX_HOME", str(tmp_path / "runtime-home"))
+        monkeypatch.setenv("VLLMLX_STATE_DIR", str(tmp_path / "state"))
+        monkeypatch.setenv("VLLMLX_LAUNCHD_LABEL", "dev.vllmlx.e2e")
+        monkeypatch.setenv("VLLMLX_LAUNCHD_DIR", str(tmp_path / "agents"))
+
+        plist = generate_plist()
+        env = plist["EnvironmentVariables"]
+
+        assert plist["Label"] == "dev.vllmlx.e2e"
+        assert plist["WorkingDirectory"] == str(tmp_path / "runtime-home")
+        assert env["HOME"] == str(tmp_path / "runtime-home")
+        assert env["VLLMLX_STATE_DIR"] == str(tmp_path / "state")
+        assert env["VLLMLX_LAUNCHD_LABEL"] == "dev.vllmlx.e2e"
+        assert env["VLLMLX_LAUNCHD_DIR"] == str(tmp_path / "agents")
 
 
 class TestInstallPlist:
@@ -389,3 +419,15 @@ class TestGetDaemonPid:
         monkeypatch.setattr("subprocess.run", mock_run)
 
         assert launchd.get_daemon_pid() is None
+
+    def test_uses_overridden_label(self, monkeypatch):
+        """Test launchctl list targets the overridden label when configured."""
+        from vllmlx.daemon import launchd
+
+        monkeypatch.setenv("VLLMLX_LAUNCHD_LABEL", "dev.vllmlx.e2e")
+        mock_run = MagicMock(return_value=MagicMock(returncode=1, stdout=""))
+        monkeypatch.setattr("subprocess.run", mock_run)
+
+        launchd.get_daemon_pid()
+
+        assert mock_run.call_args[0][0] == ["launchctl", "list", "dev.vllmlx.e2e"]

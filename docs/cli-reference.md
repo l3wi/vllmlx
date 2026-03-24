@@ -154,6 +154,40 @@ vllmlx run
 
 ---
 
+## Benchmarking
+
+### vllmlx benchmark
+
+Measure cold start, warm start, memory usage, time to first token, and token generation rate.
+
+```bash
+vllmlx benchmark <model> [options]
+```
+
+**Options:**
+- `-n, --iterations <count>` - Iterations per prompt (default: 5)
+- `-t, --max-tokens <count>` - Maximum generated tokens per response (default: 100)
+- `-p, --prompt <text>` - Custom prompt, repeatable
+- `-w, --warmup <count>` - Warmup iterations before measurement (default: 1)
+- `--temp <value>` - Sampling temperature (default: 0.7)
+- `--skip-cold-start` - Skip cold-start timing when model is already resident
+- `--timeout-load <seconds>` - Load timeout (default: 300)
+- `--timeout-gen <seconds>` - Generation timeout (default: 120)
+- `--json` - Emit machine-readable JSON summary to stdout
+
+**Examples:**
+```bash
+# Human-readable benchmark table
+vllmlx benchmark qwen3:4b
+
+# Machine-readable smoke run
+vllmlx benchmark mlx-community/Llama-3.2-1B-Instruct-4bit --json -n 1 -t 16 --warmup 0
+```
+
+When `--json` is set, stdout contains only the benchmark summary payload, which is intended for the external e2e runner and other automation.
+
+---
+
 ## Server
 
 ### vllmlx serve
@@ -461,3 +495,21 @@ Compatibility aliases (`qwen2-vl-7b`, `qwen3:8b`, `qwen3-vl:8b`, etc.) are still
 | 0 | Success |
 | 1 | General error (invalid input, operation failed) |
 | 2 | Command not found / invalid usage |
+
+---
+
+## External E2E Runner
+
+The real-model parity suite is executed via:
+
+```bash
+uv run python scripts/run_e2e.py --mode smoke
+```
+
+Key flags:
+
+- `--mode smoke|full` - Select the scenario set
+- `--scenario <name>` - Run only specific scenarios
+- `--allow-launchd` - Enable the explicit launchd lifecycle scenario
+- `--json-report <path>` - Write the aggregate JSON report to a custom path
+- `--model`, `--secondary-model`, `--download-model` - Override the default model trio

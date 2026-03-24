@@ -44,3 +44,9 @@ htmlcov/
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Generated model catalog (built into wheel when present locally)
+src/vllmlx/models/data/mlx_community_models.json
+
+# External e2e runner artifacts
+.artifacts/

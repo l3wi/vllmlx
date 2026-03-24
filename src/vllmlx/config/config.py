@@ -1,10 +1,27 @@
 """Configuration management for vllmlx."""
 
+import os
 from pathlib import Path
 from typing import Any, Literal, get_args, get_origin
 
 import toml
 from pydantic import BaseModel
+
+
+def get_runtime_home() -> Path:
+    """Return the effective runtime home directory."""
+    override = os.environ.get("VLLMLX_HOME", "").strip()
+    if override:
+        return Path(override).expanduser()
+    return Path.home()
+
+
+def get_state_dir() -> Path:
+    """Return the effective vllmlx state directory."""
+    override = os.environ.get("VLLMLX_STATE_DIR", "").strip()
+    if override:
+        return Path(override).expanduser()
+    return get_runtime_home() / ".vllmlx"
 
 
 class DaemonConfig(BaseModel):
@@ -74,7 +91,7 @@ class Config(BaseModel):
     @classmethod
     def path(cls) -> Path:
         """Get the path to the config file."""
-        return Path.home() / ".vllmlx" / "config.toml"
+        return get_state_dir() / "config.toml"
 
     @classmethod
     def load(cls) -> "Config":
