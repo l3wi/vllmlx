@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "Running Ruff checks before push..."
+uv run ruff check src tests
+uv run ruff format --check src tests

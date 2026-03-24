@@ -14,4 +14,3 @@ def test_main_does_not_disable_hf_progress_bars_by_default(monkeypatch):
     importlib.reload(main_module)
 
     assert "HF_HUB_DISABLE_PROGRESS_BARS" not in main_module.os.environ
-

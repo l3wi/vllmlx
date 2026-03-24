@@ -63,6 +63,7 @@ pip install vllmlx
 git clone https://github.com/lewi/vllmlx
 cd vllmlx
 uv sync
+git config core.hooksPath .githooks
 uv run vllmlx --help
 ```
 
