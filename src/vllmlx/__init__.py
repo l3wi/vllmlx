@@ -1,3 +1,3 @@
 """vllmlx - Ollama-style daemon and CLI for vllm-mlx."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.1 - 2026-03-24
+
+### Fixed
+- Included the packaged `mlx-community` catalog JSON in source distributions so release builds can produce wheels from the sdist and publish successfully.
+
 ### Changed
 - Refactored daemon runtime state to a single slot map (`model_slots`) using a `ModelSlot` dataclass instead of parallel dictionaries.
 - Replaced concrete supervisor type checks with a `SupervisorProtocol` contract for primary and per-model supervisors.

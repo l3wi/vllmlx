@@ -61,11 +61,24 @@ Changelog = "https://github.com/lewi/vllmlx/releases"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+artifacts = [
+    "src/vllmlx/models/data/*.json",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/vllmlx"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/vllmlx/models/data/mlx_community_models.json" = "vllmlx/models/data/mlx_community_models.json"
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/vllmlx",
+]
+
+[tool.hatch.build.targets.sdist.force-include]
+"src/vllmlx/models/data/mlx_community_models.json" = "src/vllmlx/models/data/mlx_community_models.json"
 
 [tool.hatch.version]
 path = "src/vllmlx/__init__.py"
