@@ -13,9 +13,7 @@ Ollama-style daemon and CLI for [vllm-mlx](https://github.com/waybarrios/vllm-ml
 ## Quick Start
 
 ```bash
-# Install
-pip install vllmlx
-# Or with uv (recommended)
+# Install with uv (recommended)
 uv tool install vllmlx
 
 # Pull a model
@@ -46,10 +44,14 @@ curl http://localhost:11434/v1/chat/completions \
 ### Using uv (Recommended)
 
 ```bash
+# Install uv first if needed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install vllmlx
 uv tool install vllmlx
 ```
 
-### Using pip
+### Alternative: Using pip
 
 ```bash
 pip install vllmlx
@@ -60,7 +62,8 @@ pip install vllmlx
 ```bash
 git clone https://github.com/lewi/vllmlx
 cd vllmlx
-pip install -e .
+uv sync
+uv run vllmlx --help
 ```
 
 For detailed installation instructions, see [docs/installation.md](docs/installation.md).

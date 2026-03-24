@@ -18,7 +18,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv tool install vllmlx
 ```
 
-## Using pip
+After install, confirm the CLI is available:
+
+```bash
+vllmlx --version
+```
+
+## Alternative: Using pip
 
 ```bash
 pip install vllmlx
@@ -30,7 +36,7 @@ Or with a specific Python version:
 python3.12 -m pip install vllmlx
 ```
 
-## Using pipx
+## Alternative: Using pipx
 
 ```bash
 pipx install vllmlx
@@ -43,12 +49,12 @@ pipx install vllmlx
 git clone https://github.com/lewi/vllmlx
 cd vllmlx
 
-# Install with pip
-pip install -e .
-
-# Or with uv
+# Install with uv
 uv sync
 uv run vllmlx --help
+
+# Or with pip
+pip install -e .
 ```
 
 ## Post-Installation
