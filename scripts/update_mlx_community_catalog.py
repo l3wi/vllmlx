@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
+from time import sleep
 from typing import Any
 
 from huggingface_hub import HfApi
@@ -14,6 +16,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = (
     REPO_ROOT / "src" / "vllmlx" / "models" / "data" / "mlx_community_models.json"
 )
+SIZE_FETCH_WORKERS = 2
+SIZE_FETCH_RETRIES = 3
 
 
 def _slugify(value: str) -> str:
@@ -51,11 +55,48 @@ def _to_date(value: Any) -> str:
     return ""
 
 
-def _extract_size_bytes(model: Any) -> int | None:
-    # list_models metadata does not expose exact per-file sizes. Real total size
-    # is resolved at query time via model_info(..., files_metadata=True).
-    _ = model
+def _sum_sibling_sizes(siblings: list[Any]) -> int | None:
+    sizes = [
+        sibling.size
+        for sibling in siblings
+        if isinstance(getattr(sibling, "size", None), int)
+    ]
+    if not sizes:
+        return None
+    return int(sum(sizes))
+
+
+def _extract_size_bytes(model: Any, api: HfApi | None = None) -> int | None:
+    client = api or HfApi()
+    for attempt in range(SIZE_FETCH_RETRIES + 1):
+        try:
+            info = client.model_info(model.id, files_metadata=True)
+            # Sum every sized file in the repo so split model shards contribute
+            # to the displayed total instead of leaving search results blank.
+            return _sum_sibling_sizes(list(info.siblings or []))
+        except Exception:
+            if attempt >= SIZE_FETCH_RETRIES:
+                return None
+            sleep(2**attempt)
     return None
+
+
+def _fetch_size_map(source_models: list[Any]) -> dict[str, int | None]:
+    size_map: dict[str, int | None] = {}
+    with ThreadPoolExecutor(max_workers=SIZE_FETCH_WORKERS) as executor:
+        futures = {
+            executor.submit(_extract_size_bytes, model): model.id for model in source_models
+        }
+        for future in as_completed(futures):
+            repo_id = futures[future]
+            size_map[repo_id] = future.result()
+
+    # A follow-up sequential pass cleans up transient misses from the parallel
+    # bulk fetch without forcing the whole refresh to run serially.
+    for model in source_models:
+        if size_map.get(model.id) is None:
+            size_map[model.id] = _extract_size_bytes(model)
+    return size_map
 
 
 def _build_records() -> list[dict[str, Any]]:
@@ -74,6 +115,7 @@ def _build_records() -> list[dict[str, Any]]:
         )
     )
     source_models.sort(key=lambda model: model.id.lower())
+    size_map = _fetch_size_map(source_models)
 
     used_aliases: dict[str, int] = {}
     records: list[dict[str, Any]] = []
@@ -99,7 +141,7 @@ def _build_records() -> list[dict[str, Any]]:
                 "description": _format_description(repo_name),
                 "model_type": model_type,
                 "release_date": _to_date(getattr(model, "created_at", None)),
-                "size_bytes": _extract_size_bytes(model),
+                "size_bytes": size_map.get(repo_id),
                 "updated_at": _to_iso(getattr(model, "last_modified", None)),
             }
         )
