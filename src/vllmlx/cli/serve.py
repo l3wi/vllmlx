@@ -43,7 +43,9 @@ def serve(port: int | None, host: str | None, log_level: str | None):
 
     config = Config.load()
 
-    click.echo(f"Starting vllmlx server on {host or config.daemon.host}:{port or config.daemon.port}")
+    click.echo(
+        f"Starting vllmlx server on {host or config.daemon.host}:{port or config.daemon.port}"
+    )
     click.echo("Press Ctrl+C to stop")
     click.echo()
 

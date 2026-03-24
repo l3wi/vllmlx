@@ -52,7 +52,7 @@ def list_models() -> list[ModelInfo]:
             last_mod = repo.last_modified
             if isinstance(last_mod, (int, float)):
                 last_mod = datetime.fromtimestamp(last_mod)
-            
+
             models.append(
                 ModelInfo(
                     name=repo.repo_id,

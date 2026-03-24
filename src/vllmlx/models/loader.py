@@ -21,11 +21,11 @@ def _format_size(bytes: int) -> str:
     if bytes < 1024:
         return f"{bytes}B"
     elif bytes < 1024**2:
-        return f"{bytes/1024:.1f}KB"
+        return f"{bytes / 1024:.1f}KB"
     elif bytes < 1024**3:
-        return f"{bytes/1024**2:.1f}MB"
+        return f"{bytes / 1024**2:.1f}MB"
     else:
-        return f"{bytes/1024**3:.2f}GB"
+        return f"{bytes / 1024**3:.2f}GB"
 
 
 @contextmanager
@@ -161,17 +161,13 @@ def ensure_model_downloaded(
                 )
                 console.print("[dim]Continuing download to complete missing files...[/dim]\n")
             else:
-                console.print(
-                    "[yellow]Unable to validate cached size from Hub metadata.[/yellow]"
-                )
+                console.print("[yellow]Unable to validate cached size from Hub metadata.[/yellow]")
                 console.print("[dim]Verifying by continuing download...[/dim]\n")
     except Exception:
         pass  # Not cached, need to download
 
     if _offline_mode_enabled():
-        raise RuntimeError(
-            f"Offline mode is enabled and {model_path} is not fully cached."
-        )
+        raise RuntimeError(f"Offline mode is enabled and {model_path} is not fully cached.")
 
     # Get repo info for size estimation and render pre-download context.
     total_size: int | None = remote_total_size
@@ -215,6 +211,7 @@ def get_model_size(model_path: str) -> int:
         else:
             # Get from cache
             from huggingface_hub import snapshot_download
+
             local_path = snapshot_download(model_path, local_files_only=True)
             path = Path(local_path)
 
@@ -290,6 +287,7 @@ def load_model_with_progress(
 
                 # Update elapsed time in background
                 stop_event = threading.Event()
+
                 def update_elapsed():
                     while not stop_event.is_set():
                         elapsed = time.perf_counter() - start
@@ -330,11 +328,12 @@ def unload_model(model: Any = None, processor: Any = None, config: Any = None):
         # Clear MLX cache
         try:
             import mlx.core as mx
-            if hasattr(mx, 'clear_memory_cache'):
+
+            if hasattr(mx, "clear_memory_cache"):
                 mx.clear_memory_cache()
-            elif hasattr(mx, 'clear_cache'):
+            elif hasattr(mx, "clear_cache"):
                 mx.clear_cache()
-            elif hasattr(mx.metal, 'clear_cache'):
+            elif hasattr(mx.metal, "clear_cache"):
                 mx.metal.clear_cache()
         except Exception:
             pass

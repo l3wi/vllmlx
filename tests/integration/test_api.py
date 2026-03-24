@@ -271,7 +271,7 @@ class TestProxyRouting:
 
             async def fake_proxy(request, backend_path, raw_body, payload, base_url=None):
                 async def event_stream():
-                    yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\\n\\n"
+                    yield b'data: {"choices":[{"delta":{"content":"Hi"}}]}\\n\\n'
                     yield b"data: [DONE]\\n\\n"
 
                 return StreamingResponse(event_stream(), media_type="text/event-stream")
@@ -292,45 +292,51 @@ class TestProxyRouting:
 
     def test_streaming_proxy_keeps_upstream_open_until_stream_end(self):
         app = create_app()
+        created_clients: list[FakeAsyncClient] = []
+
+        class FakeIncomingResponse:
+            def __init__(self, owner: FakeAsyncClient):
+                self.owner = owner
+                self.status_code = 200
+                self.headers = {"content-type": "text/event-stream"}
+                self.closed = False
+
+            async def aiter_bytes(self):
+                if self.owner.closed:
+                    raise RuntimeError("client closed before stream consumption")
+                yield b'data: {"choices":[{"delta":{"content":"Hi"}}]}\\n\\n'
+                if self.owner.closed:
+                    raise RuntimeError("client closed during stream consumption")
+                yield b"data: [DONE]\\n\\n"
+
+            async def aclose(self):
+                self.closed = True
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):
+                self.closed = False
+                self.is_closed = False
+                self.incoming = FakeIncomingResponse(self)
+                created_clients.append(self)
+
+            def build_request(self, *args, **kwargs):
+                return object()
+
+            async def send(self, request, stream: bool = False):  # noqa: ARG002
+                assert stream is True
+                return self.incoming
+
+            async def request(self, *args, **kwargs):  # noqa: ARG002
+                raise AssertionError("non-stream request path should not be used in this test")
+
+            async def aclose(self):
+                self.closed = True
+                self.is_closed = True
+
         with TestClient(app) as client:
             state = get_state()
             supervisor = _FakeSupervisor()
             state.primary_supervisor = supervisor
-            created_clients: list[FakeAsyncClient] = []
-
-            class FakeIncomingResponse:
-                def __init__(self, owner: FakeAsyncClient):
-                    self.owner = owner
-                    self.status_code = 200
-                    self.headers = {"content-type": "text/event-stream"}
-                    self.closed = False
-
-                async def aiter_bytes(self):
-                    if self.owner.closed:
-                        raise RuntimeError("client closed before stream consumption")
-                    yield b"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}\\n\\n"
-                    if self.owner.closed:
-                        raise RuntimeError("client closed during stream consumption")
-                    yield b"data: [DONE]\\n\\n"
-
-                async def aclose(self):
-                    self.closed = True
-
-            class FakeAsyncClient:
-                def __init__(self, *args, **kwargs):
-                    self.closed = False
-                    self.incoming = FakeIncomingResponse(self)
-                    created_clients.append(self)
-
-                def build_request(self, *args, **kwargs):
-                    return object()
-
-                async def send(self, request, stream: bool = False):
-                    assert stream is True
-                    return self.incoming
-
-                async def aclose(self):
-                    self.closed = True
 
             with patch("vllmlx.daemon.routes.httpx.AsyncClient", FakeAsyncClient):
                 response = client.post(
@@ -347,14 +353,78 @@ class TestProxyRouting:
             assert "[DONE]" in response.text
             assert len(created_clients) == 1
             assert created_clients[0].incoming.closed is True
-            assert created_clients[0].closed is True
+            assert created_clients[0].closed is False
+
+        # Client pool is closed during daemon shutdown.
+        assert created_clients[0].closed is True
+
+    def test_proxy_reuses_http_client_for_non_stream_requests(self):
+        app = create_app()
+        created_clients: list[FakeAsyncClient] = []
+
+        class FakeIncomingResponse:
+            status_code = 200
+            headers = {"content-type": "application/json"}
+            content = b'{"ok":true}'
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):  # noqa: ARG002
+                self.closed = False
+                self.is_closed = False
+                self.request_count = 0
+                created_clients.append(self)
+
+            def build_request(self, *args, **kwargs):  # noqa: ARG002
+                return object()
+
+            async def send(self, request, stream: bool = False):  # noqa: ARG002
+                raise AssertionError("stream path should not be used in this test")
+
+            async def request(self, *args, **kwargs):  # noqa: ARG002
+                self.request_count += 1
+                return FakeIncomingResponse()
+
+            async def aclose(self):
+                self.closed = True
+                self.is_closed = True
+
+        with TestClient(app) as client:
+            state = get_state()
+            supervisor = _FakeSupervisor()
+            state.primary_supervisor = supervisor
+
+            with patch("vllmlx.daemon.routes.httpx.AsyncClient", FakeAsyncClient):
+                first = client.post(
+                    "/v1/chat/completions",
+                    json={
+                        "model": "mlx-community/Qwen3-4B-4bit",
+                        "messages": [{"role": "user", "content": "hello"}],
+                        "stream": False,
+                    },
+                )
+                second = client.post(
+                    "/v1/chat/completions",
+                    json={
+                        "model": "mlx-community/Qwen3-4B-4bit",
+                        "messages": [{"role": "user", "content": "again"}],
+                        "stream": False,
+                    },
+                )
+
+            assert first.status_code == 200
+            assert second.status_code == 200
+            assert len(created_clients) == 1
+            assert created_clients[0].request_count == 2
+            assert created_clients[0].closed is False
+
+        assert created_clients[0].closed is True
 
 
 class TestHardCutCompatibility:
     def test_no_legacy_script_entry_in_pyproject(self):
         pyproject = open("pyproject.toml", "r", encoding="utf-8").read()
-        assert "vllmlx = \"vllmlx.cli.main:cli\"" in pyproject
-        assert "\nvmlx = \"" not in pyproject
+        assert 'vllmlx = "vllmlx.cli.main:cli"' in pyproject
+        assert '\nvmlx = "' not in pyproject
 
     def test_old_module_import_fails(self):
         with pytest.raises(ModuleNotFoundError):

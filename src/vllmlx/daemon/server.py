@@ -20,8 +20,7 @@ async def lifespan(app: FastAPI):
     # Startup
     state = init_state()
     should_preload = (
-        state.config.daemon.preload_default_model
-        or state.config.daemon.pin_default_model
+        state.config.daemon.preload_default_model or state.config.daemon.pin_default_model
     )
     default_model = state.resolve_default_model()
 

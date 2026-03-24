@@ -24,9 +24,9 @@ class TestBuiltinAliases:
     def test_all_aliases_have_mlx_community_prefix(self):
         """Test most builtin aliases point to mlx-community repos."""
         for alias, path in BUILTIN_ALIASES.items():
-            assert (
-                path.startswith("mlx-community/") or path.startswith("Qwen/")
-            ), f"{alias} doesn't start with a supported org prefix"
+            assert path.startswith("mlx-community/") or path.startswith("Qwen/"), (
+                f"{alias} doesn't start with a supported org prefix"
+            )
 
 
 class TestResolveAlias:

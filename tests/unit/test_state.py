@@ -277,3 +277,53 @@ class TestIdleTracking:
             state.stop_idle_tracking()
 
         assert state.idle_timer is None
+
+
+class TestHttpClientPool:
+    def test_get_http_client_reuses_per_base_url(self, monkeypatch):
+        created: list[object] = []
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):
+                self.closed = False
+                self.is_closed = False
+                created.append(self)
+
+            async def aclose(self):
+                self.closed = True
+                self.is_closed = True
+
+        monkeypatch.setattr("vllmlx.daemon.state.httpx.AsyncClient", FakeAsyncClient)
+
+        state = DaemonState(config=Config(), primary_supervisor=_DummySupervisor())
+        first = state.get_http_client("http://127.0.0.1:11435")
+        second = state.get_http_client("http://127.0.0.1:11435")
+
+        assert first is second
+        assert len(created) == 1
+
+    @pytest.mark.asyncio
+    async def test_shutdown_closes_http_clients(self, monkeypatch):
+        created: list[object] = []
+
+        class FakeAsyncClient:
+            def __init__(self, *args, **kwargs):
+                self.closed = False
+                self.is_closed = False
+                created.append(self)
+
+            async def aclose(self):
+                self.closed = True
+                self.is_closed = True
+
+        monkeypatch.setattr("vllmlx.daemon.state.httpx.AsyncClient", FakeAsyncClient)
+
+        state = DaemonState(config=Config(), primary_supervisor=_DummySupervisor())
+        state.get_http_client("http://127.0.0.1:11435")
+        state.get_http_client("http://127.0.0.1:11436")
+
+        await state.shutdown()
+
+        assert len(created) == 2
+        assert all(client.closed for client in created)
+        assert state._http_clients == {}

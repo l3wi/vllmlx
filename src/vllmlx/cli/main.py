@@ -1,5 +1,7 @@
 """Main CLI entry point for vllmlx."""
 
+# ruff: noqa: E402
+
 import os
 import sys
 import warnings
@@ -20,16 +22,20 @@ warnings.filterwarnings("ignore", message=".*deprecated.*")
 # Monkey-patch mlx to suppress its deprecation warning
 try:
     import mlx.core as mx
-    _original_device_info = getattr(mx.metal, 'device_info', None)
+
+    _original_device_info = getattr(mx.metal, "device_info", None)
     if _original_device_info:
+
         def _quiet_device_info():
             import io
+
             old_stderr = sys.stderr
             sys.stderr = io.StringIO()
             try:
                 return mx.device_info()
             finally:
                 sys.stderr = old_stderr
+
         mx.metal.device_info = _quiet_device_info
 except ImportError:
     pass

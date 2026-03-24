@@ -508,8 +508,7 @@ def _run_benchmark(
                 progress.update(
                     task,
                     description=(
-                        f"Prompt {prompt_idx + 1}/{len(prompts)}, "
-                        f"iter {iter_num + 1}/{iterations}"
+                        f"Prompt {prompt_idx + 1}/{len(prompts)}, iter {iter_num + 1}/{iterations}"
                     ),
                 )
                 _run_iteration(prompt_text, iter_num)

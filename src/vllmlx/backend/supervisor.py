@@ -85,9 +85,7 @@ class BackendSupervisor:
             )
             cmd.extend(["--scheduler-policy", self._config.backend.scheduler_policy])
             cmd.extend(["--prefill-batch-size", str(self._config.backend.prefill_batch_size)])
-            cmd.extend(
-                ["--completion-batch-size", str(self._config.backend.completion_batch_size)]
-            )
+            cmd.extend(["--completion-batch-size", str(self._config.backend.completion_batch_size)])
             cmd.extend(["--prefill-step-size", str(self._config.backend.prefill_step_size)])
             if not self._config.backend.enable_prefix_cache:
                 cmd.append("--disable-prefix-cache")
@@ -134,9 +132,7 @@ class BackendSupervisor:
             cmd.extend(["--reasoning-parser", self._config.backend.reasoning_parser])
 
         if self._config.backend.default_temperature is not None:
-            cmd.extend(
-                ["--default-temperature", str(self._config.backend.default_temperature)]
-            )
+            cmd.extend(["--default-temperature", str(self._config.backend.default_temperature)])
 
         if self._config.backend.default_top_p is not None:
             cmd.extend(["--default-top-p", str(self._config.backend.default_top_p)])

@@ -33,11 +33,7 @@ def _entry_from_payload(item: dict[str, object]) -> CatalogEntry:
         description=str(item.get("description", "")),
         model_type=str(item.get("model_type", "")),
         release_date=str(item.get("release_date", "")),
-        size_bytes=(
-            int(item["size_bytes"])
-            if isinstance(item.get("size_bytes"), int)
-            else None
-        ),
+        size_bytes=(int(item["size_bytes"]) if isinstance(item.get("size_bytes"), int) else None),
         updated_at=str(item.get("updated_at", "")),
     )
 

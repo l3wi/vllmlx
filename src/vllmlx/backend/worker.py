@@ -20,14 +20,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stream-interval", type=int, default=1)
     parser.add_argument("--continuous-batching", action="store_true")
     parser.add_argument("--max-num-seqs", type=int, default=256)
+    parser.add_argument("--max-num-batched-tokens", type=int, default=8192)
+    parser.add_argument(
+        "--scheduler-policy",
+        choices=["fcfs", "priority"],
+        default="fcfs",
+    )
     parser.add_argument("--prefill-batch-size", type=int, default=8)
     parser.add_argument("--completion-batch-size", type=int, default=32)
+    parser.add_argument("--prefill-step-size", type=int, default=2048)
+    parser.add_argument("--enable-prefix-cache", action="store_true", default=True)
+    parser.add_argument("--disable-prefix-cache", action="store_true")
+    parser.add_argument("--prefix-cache-size", type=int, default=100)
     parser.add_argument("--cache-memory-mb", type=int, default=None)
     parser.add_argument("--cache-memory-percent", type=float, default=0.20)
     parser.add_argument("--no-memory-aware-cache", action="store_true")
     parser.add_argument("--use-paged-cache", action="store_true")
     parser.add_argument("--paged-cache-block-size", type=int, default=64)
     parser.add_argument("--max-cache-blocks", type=int, default=1000)
+    parser.add_argument("--chunked-prefill-tokens", type=int, default=0)
+    parser.add_argument("--mid-prefill-save-interval", type=int, default=8192)
     parser.add_argument("--api-key", default=None)
     parser.add_argument("--rate-limit", type=int, default=0)
     parser.add_argument("--timeout", type=float, default=300.0)
@@ -44,7 +56,7 @@ def run() -> None:
     args = parse_args()
 
     from vllm_mlx import server
-    from vllm_mlx.scheduler import SchedulerConfig
+    from vllm_mlx.scheduler import SchedulerConfig, SchedulingPolicy
     from vllm_mlx.server import RateLimiter, app, load_model
 
     server._api_key = args.api_key
@@ -73,18 +85,24 @@ def run() -> None:
 
     scheduler_config = None
     if args.continuous_batching:
+        enable_prefix_cache = args.enable_prefix_cache and not args.disable_prefix_cache
         scheduler_config = SchedulerConfig(
             max_num_seqs=args.max_num_seqs,
+            max_num_batched_tokens=args.max_num_batched_tokens,
+            policy=SchedulingPolicy(args.scheduler_policy),
             prefill_batch_size=args.prefill_batch_size,
             completion_batch_size=args.completion_batch_size,
-            enable_prefix_cache=True,
-            prefix_cache_size=100,
+            prefill_step_size=args.prefill_step_size,
+            enable_prefix_cache=enable_prefix_cache,
+            prefix_cache_size=args.prefix_cache_size,
             use_memory_aware_cache=not args.no_memory_aware_cache,
             cache_memory_mb=args.cache_memory_mb,
             cache_memory_percent=args.cache_memory_percent,
             use_paged_cache=args.use_paged_cache,
             paged_cache_block_size=args.paged_cache_block_size,
             max_cache_blocks=args.max_cache_blocks,
+            chunked_prefill_tokens=args.chunked_prefill_tokens,
+            mid_prefill_save_interval=args.mid_prefill_save_interval,
         )
 
     load_model(

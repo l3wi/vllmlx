@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import httpx
+
 from vllmlx.backend import BackendSupervisor
 from vllmlx.config import Config
 
@@ -73,6 +75,7 @@ class DaemonState:
     idle_timer: "IdleTimer | None" = None
     model_slots: dict[str, ModelSlot] = field(default_factory=dict)
     _next_backend_port: int | None = None
+    _http_clients: dict[str, httpx.AsyncClient] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.primary_supervisor.is_running() and self.primary_supervisor.active_model:
@@ -101,9 +104,7 @@ class DaemonState:
     def list_loaded_models(self) -> list[str]:
         """Return loaded models ordered by recency."""
         running_models = [
-            model
-            for model, slot in self.model_slots.items()
-            if slot.supervisor.is_running()
+            model for model, slot in self.model_slots.items() if slot.supervisor.is_running()
         ]
         return sorted(
             running_models,
@@ -183,6 +184,7 @@ class DaemonState:
             await self.primary_supervisor.shutdown()
 
         self.model_slots.clear()
+        await self.close_http_clients()
 
     def touch(self) -> None:
         """Mark daemon as active and reset idle timer countdown."""
@@ -270,9 +272,7 @@ class DaemonState:
 
     def _oldest_evictable_model(self) -> str | None:
         pinned_model = self._pinned_model()
-        candidates = [
-            model for model in self.model_slots.keys() if model != pinned_model
-        ]
+        candidates = [model for model in self.model_slots.keys() if model != pinned_model]
         if not candidates:
             return None
         return min(
@@ -283,7 +283,9 @@ class DaemonState:
     async def _evict_model(self, model: str) -> None:
         slot = self._remove_slot(model)
         if slot:
+            base_url = slot.supervisor.backend_url
             await slot.supervisor.stop()
+            await self.close_http_client(base_url)
 
     def _build_supervisor_for_port(self, port: int) -> SupervisorProtocol:
         config = self.config.model_copy(deep=True)
@@ -363,6 +365,35 @@ class DaemonState:
         except Exception:
             return True
 
+    def get_http_client(self, base_url: str) -> httpx.AsyncClient:
+        """Return a pooled HTTP client for a backend base URL."""
+        client = self._http_clients.get(base_url)
+        if client and not getattr(client, "is_closed", False):
+            return client
+
+        client = httpx.AsyncClient(base_url=base_url, timeout=None)
+        self._http_clients[base_url] = client
+        return client
+
+    async def close_http_client(self, base_url: str) -> None:
+        """Close and remove a pooled HTTP client for one backend."""
+        client = self._http_clients.pop(base_url, None)
+        if client is None:
+            return
+        try:
+            await client.aclose()
+        except Exception:
+            return
+
+    async def close_http_clients(self) -> None:
+        """Close and clear all pooled backend HTTP clients."""
+        clients = list(self._http_clients.values())
+        self._http_clients.clear()
+        for client in clients:
+            try:
+                await client.aclose()
+            except Exception:
+                continue
 
 
 def init_state() -> DaemonState:
@@ -378,7 +409,6 @@ def init_state() -> DaemonState:
         pass
     _state = state
     return state
-
 
 
 def get_state() -> DaemonState:

@@ -42,25 +42,14 @@ _HOP_BY_HOP_HEADERS = {
 }
 
 
-
 def _filter_request_headers(headers: httpx.Headers) -> dict[str, str]:
     """Filter hop-by-hop headers before forwarding to backend."""
-    return {
-        key: value
-        for key, value in headers.items()
-        if key.lower() not in _HOP_BY_HOP_HEADERS
-    }
-
+    return {key: value for key, value in headers.items() if key.lower() not in _HOP_BY_HOP_HEADERS}
 
 
 def _filter_response_headers(headers: httpx.Headers) -> dict[str, str]:
     """Filter hop-by-hop headers when returning proxied responses."""
-    return {
-        key: value
-        for key, value in headers.items()
-        if key.lower() not in _HOP_BY_HOP_HEADERS
-    }
-
+    return {key: value for key, value in headers.items() if key.lower() not in _HOP_BY_HOP_HEADERS}
 
 
 def _extract_target_model(path: str, payload: Any) -> str | None:
@@ -73,7 +62,6 @@ def _extract_target_model(path: str, payload: Any) -> str | None:
     if not isinstance(model, str) or not model.strip():
         return None
     return model
-
 
 
 def _is_stream_request(payload: Any, request: Request) -> bool:
@@ -98,13 +86,13 @@ async def _proxy(
     base_url: str,
 ) -> Response:
     """Proxy an HTTP request to the active backend worker."""
+    state = get_state()
     headers = _filter_request_headers(request.headers)
     params = dict(request.query_params)
     method = request.method.upper()
+    client = state.get_http_client(base_url)
 
     if _is_stream_request(payload, request):
-        # Keep the upstream client alive for the full streaming lifetime.
-        client = httpx.AsyncClient(base_url=base_url, timeout=None)
         outgoing = client.build_request(
             method,
             backend_path,
@@ -115,7 +103,6 @@ async def _proxy(
         try:
             incoming = await client.send(outgoing, stream=True)
         except httpx.HTTPError as exc:
-            await client.aclose()
             raise HTTPException(
                 status_code=503,
                 detail=f"Backend proxy request failed: {exc}",
@@ -127,7 +114,6 @@ async def _proxy(
                     yield chunk
             finally:
                 await incoming.aclose()
-                await client.aclose()
 
         return StreamingResponse(
             iterator(),
@@ -136,20 +122,19 @@ async def _proxy(
             headers=_filter_response_headers(incoming.headers),
         )
 
-    async with httpx.AsyncClient(base_url=base_url, timeout=None) as client:
-        try:
-            incoming = await client.request(
-                method,
-                backend_path,
-                headers=headers,
-                params=params,
-                content=raw_body,
-            )
-        except httpx.HTTPError as exc:
-            raise HTTPException(
-                status_code=503,
-                detail=f"Backend proxy request failed: {exc}",
-            ) from exc
+    try:
+        incoming = await client.request(
+            method,
+            backend_path,
+            headers=headers,
+            params=params,
+            content=raw_body,
+        )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Backend proxy request failed: {exc}",
+        ) from exc
 
     return Response(
         content=incoming.content,
