@@ -57,6 +57,20 @@ rm ~/Library/LaunchAgents/com.vllmlx.daemon.plist
 vllmlx daemon start
 ```
 
+#### 5. Verify backend and daemon ports are different
+
+`backend.port` is the internal worker port. It must not match `daemon.port`, or the
+daemon can proxy requests back to itself and appear to hang.
+
+```bash
+vllmlx config get daemon.port
+vllmlx config get backend.port
+
+# Reset the backend worker port if needed
+vllmlx config set backend.port 8001
+vllmlx daemon restart
+```
+
 ### Daemon uses too much memory
 
 When a model is loaded, it uses significant RAM. To reduce idle memory usage:
@@ -185,6 +199,9 @@ First request after idle timeout is slow because the model needs to load:
    ```bash
    vllmlx config set daemon.health_ttl_seconds 2.0
    ```
+
+If the request never returns and the REPL just sits after your first prompt, also verify that
+`backend.port` is not set to the same value as `daemon.port`.
 
 ### Streaming doesn't work
 

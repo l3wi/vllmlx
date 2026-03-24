@@ -15,7 +15,7 @@ class _FakeSupervisor:
         self.running = False
         self.active_model: str | None = None
         self.stop_calls = 0
-        self.backend_url = "http://127.0.0.1:11435"
+        self.backend_url = "http://127.0.0.1:8001"
 
     def is_running(self) -> bool:
         return self.running

@@ -4,6 +4,7 @@ import click
 import httpx
 from rich.console import Console
 
+from vllmlx.config import RuntimeConfigError
 from vllmlx.daemon.launchd import (
     get_plist_path,
     install_plist,
@@ -74,6 +75,11 @@ def run(model: str = None):
     from vllmlx.models.aliases import resolve_alias
 
     config = Config.load()
+    try:
+        config.validate_runtime()
+    except RuntimeConfigError as exc:
+        console.print(f"[red]Error: {exc}[/red]")
+        raise SystemExit(1) from exc
 
     # Determine model to use
     if not model:

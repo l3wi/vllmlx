@@ -118,3 +118,15 @@ async def test_start_forwards_new_scheduler_settings(monkeypatch, tmp_path: Path
     assert cmd[cmd.index("--mid-prefill-save-interval") + 1] == "4096"
 
     await supervisor.stop()
+
+
+@pytest.mark.asyncio
+async def test_start_rejects_backend_port_collision(tmp_path: Path):
+    config = Config(
+        daemon={"port": 8000},
+        backend={"port": 8000},
+    )
+    supervisor = BackendSupervisor(config)
+
+    with pytest.raises(BackendStartupError, match="backend.port must differ from daemon.port"):
+        await supervisor.start("mlx-community/Qwen3-4B-4bit")

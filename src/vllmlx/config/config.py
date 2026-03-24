@@ -8,6 +8,10 @@ import toml
 from pydantic import BaseModel
 
 
+class RuntimeConfigError(ValueError):
+    """Raised when runtime config values are internally inconsistent."""
+
+
 def get_runtime_home() -> Path:
     """Return the effective runtime home directory."""
     override = os.environ.get("VLLMLX_HOME", "").strip()
@@ -42,7 +46,7 @@ class BackendConfig(BaseModel):
     """Managed vllm-mlx worker configuration."""
 
     host: str = "127.0.0.1"
-    port: int = 11435
+    port: int = 8001
     startup_timeout: int = 600
     stop_timeout: int = 15
     continuous_batching: bool = False
@@ -108,6 +112,15 @@ class Config(BaseModel):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             toml.dump(self.model_dump(), f)
+
+    def validate_runtime(self) -> None:
+        """Validate runtime config combinations before starting traffic."""
+        if self.backend.port == self.daemon.port:
+            raise RuntimeConfigError(
+                "backend.port must differ from daemon.port "
+                f"(both are {self.daemon.port}). "
+                "The daemon proxies to the backend, so sharing a port causes request loops."
+            )
 
     @staticmethod
     def _coerce_value(value: Any, annotation: Any) -> Any:

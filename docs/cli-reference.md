@@ -404,6 +404,9 @@ vllmlx config get <key>
 vllmlx config get daemon.port
 # daemon.port = 8000
 
+vllmlx config get backend.port
+# backend.port = 8001
+
 vllmlx config get models.default
 # models.default = qwen2-vl-7b-instruct-4bit
 ```

@@ -10,7 +10,7 @@ from vllmlx.daemon.state import DaemonState, ModelSlot, get_state, init_state
 
 
 class _DummySupervisor:
-    def __init__(self, port: int = 11435):
+    def __init__(self, port: int = 8001):
         self.active_model: str | None = None
         self.running = False
         self.healthy = True
@@ -114,7 +114,7 @@ class TestDaemonState:
 
     @pytest.mark.asyncio
     async def test_unload_on_idle_unloads_stale_models_from_pool(self):
-        primary = _DummySupervisor(port=11435)
+        primary = _DummySupervisor(port=8001)
         primary.running = True
         primary.active_model = "mlx-community/Qwen3-8B-4bit"
 
@@ -148,8 +148,8 @@ class TestDaemonState:
         )
         state.model_slots = {
             "mlx-community/Qwen3-8B-4bit": ModelSlot(
-                supervisor=_DummySupervisor(port=11435),
-                port=11435,
+                supervisor=_DummySupervisor(port=8001),
+                port=8001,
                 last_used_at=datetime.now().replace(year=2000),
             ),
             "mlx-community/Qwen3-Embedding-4B-4bit-DWQ": ModelSlot(
@@ -211,7 +211,7 @@ class TestDaemonState:
     async def test_unhealthy_existing_slot_is_replaced_and_metadata_stays_consistent(self):
         target_model = "mlx-community/Qwen3-8B-4bit"
 
-        primary = _DummySupervisor(port=11435)
+        primary = _DummySupervisor(port=8001)
         stale = _DummySupervisor(port=11436)
         stale.running = True
         stale.active_model = target_model
@@ -234,7 +234,7 @@ class TestDaemonState:
         assert primary.ensure_calls == [target_model]
         assert set(state.model_slots.keys()) == {target_model}
         assert state.model_slots[target_model].supervisor is primary
-        assert state.model_slots[target_model].port == 11435
+        assert state.model_slots[target_model].port == 8001
 
 
 class TestGlobalState:
@@ -296,8 +296,8 @@ class TestHttpClientPool:
         monkeypatch.setattr("vllmlx.daemon.state.httpx.AsyncClient", FakeAsyncClient)
 
         state = DaemonState(config=Config(), primary_supervisor=_DummySupervisor())
-        first = state.get_http_client("http://127.0.0.1:11435")
-        second = state.get_http_client("http://127.0.0.1:11435")
+        first = state.get_http_client("http://127.0.0.1:8001")
+        second = state.get_http_client("http://127.0.0.1:8001")
 
         assert first is second
         assert len(created) == 1
@@ -319,7 +319,7 @@ class TestHttpClientPool:
         monkeypatch.setattr("vllmlx.daemon.state.httpx.AsyncClient", FakeAsyncClient)
 
         state = DaemonState(config=Config(), primary_supervisor=_DummySupervisor())
-        state.get_http_client("http://127.0.0.1:11435")
+        state.get_http_client("http://127.0.0.1:8001")
         state.get_http_client("http://127.0.0.1:11436")
 
         await state.shutdown()

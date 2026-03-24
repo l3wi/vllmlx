@@ -15,7 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="vllmlx internal backend worker")
     parser.add_argument("--model", required=True)
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=11435)
+    parser.add_argument("--port", type=int, default=8001)
     parser.add_argument("--max-tokens", type=int, default=32768)
     parser.add_argument("--stream-interval", type=int, default=1)
     parser.add_argument("--continuous-batching", action="store_true")

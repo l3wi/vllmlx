@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from vllmlx.config import BackendConfig, Config, DaemonConfig, ModelsConfig
+from vllmlx.config.config import RuntimeConfigError
 
 
 class TestDaemonConfig:
@@ -67,7 +68,7 @@ class TestBackendConfig:
     def test_default_values(self):
         config = BackendConfig()
         assert config.host == "127.0.0.1"
-        assert config.port == 11435
+        assert config.port == 8001
         assert config.continuous_batching is False
         assert config.max_tokens == 32768
         assert config.max_num_batched_tokens == 8192
@@ -112,7 +113,7 @@ class TestConfig:
         """Test default config has expected values."""
         config = Config()
         assert config.daemon.port == 8000
-        assert config.backend.port == 11435
+        assert config.backend.port == 8001
         assert config.models.default == ""
         assert config.aliases == {}
 
@@ -249,3 +250,22 @@ class TestConfig:
 
         assert config.get("daemon.port") == 8080
         assert config.get("aliases.my-model") == "some-org/some-model-4bit"
+
+    def test_validate_runtime_rejects_backend_port_collision(self):
+        """The daemon API and managed backend must not share a port."""
+        config = Config(
+            daemon=DaemonConfig(port=8000),
+            backend=BackendConfig(port=8000),
+        )
+
+        with pytest.raises(RuntimeConfigError, match="backend.port"):
+            config.validate_runtime()
+
+    def test_validate_runtime_allows_distinct_ports(self):
+        """Default daemon/backend port separation should validate cleanly."""
+        config = Config(
+            daemon=DaemonConfig(port=8000),
+            backend=BackendConfig(port=8001),
+        )
+
+        config.validate_runtime()

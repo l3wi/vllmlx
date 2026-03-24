@@ -13,7 +13,7 @@ from pathlib import Path
 
 import httpx
 
-from vllmlx.config import Config, get_runtime_home, get_state_dir
+from vllmlx.config import Config, RuntimeConfigError, get_runtime_home, get_state_dir
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,11 @@ class BackendSupervisor:
 
     async def start(self, model: str) -> None:
         """Start worker process for a model and wait for readiness."""
+        try:
+            self._config.validate_runtime()
+        except RuntimeConfigError as exc:
+            raise BackendStartupError(str(exc)) from exc
+
         log_dir = get_state_dir() / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
 

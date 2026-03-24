@@ -308,7 +308,7 @@ class DaemonState:
         try:
             return int(supervisor.backend_url.rsplit(":", 1)[1])
         except Exception:
-            return 11435
+            return 8001
 
     def _upsert_slot(
         self,

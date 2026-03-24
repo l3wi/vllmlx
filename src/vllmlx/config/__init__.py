@@ -5,6 +5,7 @@ from vllmlx.config.config import (
     Config,
     DaemonConfig,
     ModelsConfig,
+    RuntimeConfigError,
     get_runtime_home,
     get_state_dir,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "DaemonConfig",
     "BackendConfig",
     "ModelsConfig",
+    "RuntimeConfigError",
     "get_runtime_home",
     "get_state_dir",
 ]

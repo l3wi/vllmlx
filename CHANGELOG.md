@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+## 0.1.4 - 2026-03-24
+
+### Fixed
+- Rejected invalid configs where `backend.port` matches `daemon.port`, preventing the daemon from proxying requests back to itself and hanging interactive chats.
+
 ### Changed
+- Changed the default internal backend worker port from `11435` to `8001` so the public OpenAI-compatible API stays on `8000` while the managed backend remains on a nearby, distinct port.
 - Removed the legacy hardcoded shorthand alias compatibility layer. Built-in alias resolution now comes only from the packaged `mlx-community` catalog, so commands and docs use catalog aliases such as `qwen2-vl-7b-instruct-4bit` or full HuggingFace repo ids.
 
 ## 0.1.2 - 2026-03-24

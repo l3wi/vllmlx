@@ -135,6 +135,9 @@ idle_timeout = 600  # seconds
 log_level = "info"
 health_ttl_seconds = 1.0
 
+[backend]
+port = 8001  # internal worker port; must differ from daemon.port
+
 [models]
 default = "qwen2-vl-7b-instruct-4bit"
 
@@ -147,6 +150,7 @@ Set values via CLI:
 ```bash
 vllmlx config set daemon.idle_timeout 120
 vllmlx config set models.default qwen2-vl-7b-instruct-4bit
+vllmlx config set backend.port 8001
 ```
 
 ## Optimization Profiles

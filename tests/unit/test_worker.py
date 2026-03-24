@@ -89,7 +89,7 @@ def test_run_passes_new_scheduler_settings_to_vllm_mlx():
     args = argparse.Namespace(
         model="mlx-community/Qwen3-4B-4bit",
         host="127.0.0.1",
-        port=11435,
+        port=8001,
         max_tokens=16384,
         stream_interval=2,
         continuous_batching=True,
