@@ -8,9 +8,13 @@ from typing import Any, Tuple
 
 from rich.console import Console
 from rich.progress import (
+    BarColumn,
+    DownloadColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
+    TimeRemainingColumn,
+    TransferSpeedColumn,
 )
 
 console = Console()
@@ -63,8 +67,84 @@ def _snapshot_download(
     if local_files_only:
         return snapshot_download(model_path, local_files_only=True)
 
-    with _hf_progress_scope(quiet=quiet):
-        return snapshot_download(model_path)
+    if quiet:
+        with _hf_progress_scope(quiet=True):
+            return snapshot_download(model_path)
+
+    return _snapshot_download_with_progress(model_path)
+
+
+def _get_local_blob_cache_size(model_path: str) -> int:
+    """Return bytes already present in the repo blob cache, including incomplete files."""
+    from huggingface_hub import constants
+    from huggingface_hub.file_download import repo_folder_name
+
+    storage_folder = os.path.join(
+        constants.HF_HUB_CACHE,
+        repo_folder_name(repo_id=model_path, repo_type="model"),
+    )
+    blobs_folder = os.path.join(storage_folder, "blobs")
+    if not os.path.isdir(blobs_folder):
+        return 0
+
+    total = 0
+    for root, _, files in os.walk(blobs_folder):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            try:
+                total += os.path.getsize(file_path)
+            except OSError:
+                continue
+    return total
+
+
+def _snapshot_download_with_progress(model_path: str) -> str:
+    """Download a model snapshot while rendering a single stable local progress bar."""
+    from huggingface_hub import snapshot_download
+
+    initial_size = _get_local_blob_cache_size(model_path)
+    total_size = max(initial_size, _fetch_remote_total_size(model_path) or 0)
+    stop_event = threading.Event()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        DownloadColumn(),
+        TransferSpeedColumn(),
+        TimeRemainingColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(
+            "Downloading...",
+            total=total_size or None,
+            completed=initial_size,
+        )
+
+        def _monitor_progress() -> None:
+            while not stop_event.wait(0.2):
+                current_size = _get_local_blob_cache_size(model_path)
+                if total_size:
+                    current_size = min(current_size, total_size)
+                progress.update(task, completed=current_size)
+
+        thread = threading.Thread(target=_monitor_progress, daemon=True)
+        thread.start()
+        try:
+            with _hf_progress_scope(quiet=True):
+                local_path = snapshot_download(model_path)
+        finally:
+            stop_event.set()
+            thread.join()
+            current_size = _get_local_blob_cache_size(model_path)
+            if total_size:
+                current_size = min(current_size, total_size)
+                progress.update(task, completed=current_size, total=total_size)
+            else:
+                progress.update(task, completed=current_size)
+
+    return local_path
 
 
 def _offline_mode_enabled() -> bool:

@@ -2,6 +2,45 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+
+def test_snapshot_download_uses_custom_progress_monitor_when_not_quiet(monkeypatch):
+    """Visible downloads should use the local progress monitor instead of HF bars."""
+    from vllmlx.models.loader import _snapshot_download
+
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        "vllmlx.models.loader._snapshot_download_with_progress",
+        lambda model_path: calls.append(model_path) or "/tmp/mock-model",
+    )
+
+    local_path = _snapshot_download("mlx-community/Qwen3-4B-4bit", quiet=False)
+
+    assert local_path == "/tmp/mock-model"
+    assert calls == ["mlx-community/Qwen3-4B-4bit"]
+
+
+def test_get_local_blob_cache_size_counts_complete_and_incomplete_blobs(monkeypatch, tmp_path):
+    """Progress sizing should include both completed blobs and resumable partial blobs."""
+    from vllmlx.models.loader import _get_local_blob_cache_size
+
+    repo_folder = tmp_path / "models--mlx-community--Qwen3-4B-4bit"
+    blobs = repo_folder / "blobs"
+    blobs.mkdir(parents=True)
+    (blobs / "complete-1").write_bytes(b"a" * 10)
+    (blobs / "complete-2").write_bytes(b"b" * 20)
+    (blobs / "partial.incomplete").write_bytes(b"c" * 5)
+
+    monkeypatch.setattr("huggingface_hub.constants.HF_HUB_CACHE", str(tmp_path))
+    monkeypatch.setattr(
+        "huggingface_hub.file_download.repo_folder_name",
+        lambda repo_id, repo_type: Path(repo_folder).name,
+    )
+
+    assert _get_local_blob_cache_size("mlx-community/Qwen3-4B-4bit") == 35
+
 
 def test_download_uses_files_metadata_and_snapshot_download(monkeypatch):
     """Use files metadata and HF-native snapshot download path."""

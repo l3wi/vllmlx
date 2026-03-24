@@ -8,7 +8,6 @@ import warnings
 
 # Suppress TensorFlow/PyTorch not found warnings from transformers
 os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
-os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 # Suppress all deprecation warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)

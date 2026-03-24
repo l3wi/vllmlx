@@ -85,3 +85,19 @@ def test_pull_yes_skips_prompt_for_non_mlx_namespace():
         "Qwen/Qwen3-Embedding-4B",
         verify_complete=True,
     )
+
+
+def test_pull_does_not_print_alias_resolution_message():
+    runner = CliRunner()
+
+    with (
+        patch("vllmlx.cli.pull.Config.load") as mock_load,
+        patch("vllmlx.cli.pull.ensure_model_downloaded") as mock_download,
+    ):
+        mock_load.return_value.aliases = {}
+        mock_download.return_value = ("/tmp/model", False)
+
+        result = runner.invoke(pull, ["qwen3-8b-4bit"])
+
+    assert result.exit_code == 0
+    assert "Resolving" not in result.output

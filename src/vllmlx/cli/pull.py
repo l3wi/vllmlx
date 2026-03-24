@@ -34,13 +34,13 @@ def pull(model: str, yes: bool):
     """Download a model from HuggingFace.
 
     MODEL can be:
-    - an alias (e.g., qwen2-vl-2b, qwen3:8b)
+    - a packaged catalog alias (e.g., qwen2-vl-2b-instruct-4bit, qwen3-8b-4bit)
     - a full HuggingFace repo ID (e.g., mlx-community/Qwen3-8B-4bit)
     - a HuggingFace URL (e.g., https://huggingface.co/Qwen/Qwen3-Embedding-4B)
 
     Examples:
 
-        vllmlx pull qwen3:8b
+        vllmlx pull qwen3-8b-4bit
 
         vllmlx pull mlx-community/Some-Model-4bit
 
@@ -51,9 +51,6 @@ def pull(model: str, yes: bool):
 
     # Resolve alias to full HF path
     hf_path = resolve_alias(model, custom_aliases=config.aliases)
-
-    if hf_path != model:
-        console.print(f"Resolving [cyan]{model}[/cyan] → [green]{hf_path}[/green]\n")
 
     if _requires_non_mlx_confirmation(hf_path) and not yes:
         click.confirm(
