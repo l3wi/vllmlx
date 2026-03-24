@@ -54,4 +54,6 @@ src/vllmlx/models/data/mlx_community_models.json
 # Local agent/orchestration artifacts
 .claude/
 .pi/
-
+.agent-state.json
+.orchestration-state.json
+.plan-vmlx.json

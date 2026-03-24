@@ -231,9 +231,7 @@ class TestDaemonStatus:
             patch("vllmlx.cli.daemon_cmd.Config") as mock_config,
             patch("vllmlx.cli.daemon_cmd.httpx") as mock_httpx,
         ):
-            mock_config.load.return_value = MagicMock(
-                daemon=MagicMock(host="127.0.0.1", port=8000)
-            )
+            mock_config.load.return_value = MagicMock(daemon=MagicMock(host="127.0.0.1", port=8000))
             mock_httpx.get.return_value = MagicMock(
                 status_code=200,
                 json=MagicMock(
